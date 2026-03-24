@@ -1,39 +1,51 @@
-import { Button } from "@/components/ui/button";
 import type { SourceListing } from "@/types";
 
-const sourceNames: Record<string, string> = {
-  yes24: "예스24",
-  interpark: "인터파크",
-  melon: "멜론티켓",
+const sourceConfig: Record<string, { label: string; className: string }> = {
+  yes24: { label: "예스24", className: "btn-yes24" },
+  interpark: { label: "인터파크", className: "btn-interpark" },
+  melon: { label: "멜론티켓", className: "btn-melon" },
 };
 
-const sourceColors: Record<string, string> = {
-  yes24: "bg-red-500 hover:bg-red-600",
-  interpark: "bg-purple-500 hover:bg-purple-600",
-  melon: "bg-green-500 hover:bg-green-600",
-};
-
-export function SourceLinks({ listings }: { listings: SourceListing[] }) {
+export function SourceLinks({
+  listings,
+  size = "default",
+}: {
+  listings: SourceListing[];
+  size?: "default" | "large";
+}) {
   if (listings.length === 0) return null;
+
+  const isLarge = size === "large";
 
   return (
     <div>
-      <h3 className="font-semibold mb-2">티켓 구매</h3>
-      <div className="flex flex-wrap gap-2">
-        {listings.map((listing) => (
-          <a
-            key={listing.id}
-            href={listing.source_url}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Button
-              className={`text-white ${sourceColors[listing.source] || ""}`}
+      {isLarge && (
+        <p className="text-sm font-bold text-[#424754] mb-4">
+          공식 예매처 바로가기
+        </p>
+      )}
+      <div className={isLarge ? "grid grid-cols-3 gap-4" : "flex flex-wrap gap-2"}>
+        {listings.map((listing) => {
+          const config = sourceConfig[listing.source] || {
+            label: listing.source,
+            className: "bg-gray-500",
+          };
+          return (
+            <a
+              key={listing.id}
+              href={listing.source_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`${config.className} text-white font-bold text-center rounded transition-all ${
+                isLarge
+                  ? "py-4 text-base"
+                  : "px-4 py-2 text-xs rounded"
+              } inline-block`}
             >
-              {sourceNames[listing.source] || listing.source}에서 구매
-            </Button>
-          </a>
-        ))}
+              {isLarge ? `${config.label}에서 구매` : config.label}
+            </a>
+          );
+        })}
       </div>
     </div>
   );

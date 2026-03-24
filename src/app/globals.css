@@ -49,24 +49,24 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --background: #faf8ff;
+  --foreground: #131b2e;
+  --card: #ffffff;
+  --card-foreground: #131b2e;
+  --popover: #ffffff;
+  --popover-foreground: #131b2e;
+  --primary: #0058be;
+  --primary-foreground: #ffffff;
+  --secondary: #f2f3ff;
+  --secondary-foreground: #131b2e;
+  --muted: #f2f3ff;
+  --muted-foreground: #424754;
+  --accent: #f2f3ff;
+  --accent-foreground: #131b2e;
+  --destructive: #da3437;
+  --border: rgba(194, 198, 214, 0.15);
+  --input: #f2f3ff;
+  --ring: #0058be;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -122,9 +122,45 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-[#faf8ff] text-foreground;
   }
   html {
     @apply font-sans;
   }
+}
+
+.status-on-sale {
+  background: #6cf8bb;
+  color: #00714d;
+}
+.status-upcoming {
+  background: #2170e4;
+  color: #fefcff;
+}
+.status-sold-out {
+  background: #da3437;
+  color: #fffbff;
+}
+.status-completed {
+  background: #c2c6d6;
+  color: #ffffff;
+}
+
+.btn-yes24 {
+  background: #ff3b30;
+}
+.btn-yes24:hover {
+  background: #e6352b;
+}
+.btn-interpark {
+  background: #6b4297;
+}
+.btn-interpark:hover {
+  background: #5c3a83;
+}
+.btn-melon {
+  background: #00aa5b;
+}
+.btn-melon:hover {
+  background: #009950;
 }

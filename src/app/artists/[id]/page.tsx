@@ -1,40 +1,25 @@
 import { PerformanceCard } from "@/components/performance/PerformanceCard";
+import { createServerClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import type { Artist, Performance } from "@/types";
 
-// TODO: Replace with Supabase query
-async function getArtistWithPerformances(id: string): Promise<{
-  artist: Artist;
-  performances: Performance[];
-} | null> {
-  return {
-    artist: {
-      id,
-      name_ko: "요아소비",
-      name_ja: "YOASOBI",
-      name_en: "YOASOBI",
-      image_url: null,
-      created_at: new Date().toISOString(),
-    },
-    performances: [
-      {
-        id: "1",
-        artist_id: id,
-        title: "YOASOBI ASIA TOUR 2026 in KOREA",
-        venue: "KSPO DOME",
-        city: "서울",
-        start_date: "2026-04-15",
-        end_date: "2026-04-16",
-        ticket_open_at: "2026-04-10T20:00:00+09:00",
-        presale_open_at: null,
-        price_info: "VIP 198,000원 / R석 154,000원",
-        status: "upcoming",
-        image_url: null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-    ],
-  };
+async function getArtistWithPerformances(id: string) {
+  const supabase = createServerClient();
+
+  const { data: artist } = await supabase
+    .from("artists")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (!artist) return null;
+
+  const { data: performances } = await supabase
+    .from("performances")
+    .select("*")
+    .eq("artist_id", id)
+    .order("start_date", { ascending: true });
+
+  return { artist, performances: performances || [] };
 }
 
 export default async function ArtistDetailPage({

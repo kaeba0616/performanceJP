@@ -12,13 +12,13 @@ export interface Performance {
   artist_id: string | null;
   title: string;
   venue: string | null;
-  city: string;
+  city: string | null;
   start_date: string;
   end_date: string | null;
   ticket_open_at: string | null;
   presale_open_at: string | null;
   price_info: string | null;
-  status: "upcoming" | "on_sale" | "sold_out" | "completed";
+  status: string;
   image_url: string | null;
   created_at: string;
   updated_at: string;
@@ -28,7 +28,7 @@ export interface Performance {
 export interface SourceListing {
   id: string;
   performance_id: string | null;
-  source: "yes24" | "interpark" | "melon";
+  source: string;
   source_url: string;
   source_id: string | null;
   raw_title: string;

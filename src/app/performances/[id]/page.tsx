@@ -1,73 +1,30 @@
-import { Badge } from "@/components/ui/badge";
 import { TicketCountdown } from "@/components/performance/TicketCountdown";
 import { SourceLinks } from "@/components/performance/SourceLinks";
+import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatDateTime } from "@/lib/utils/date";
 import type { PerformanceWithDetails } from "@/types";
 import Link from "next/link";
 
-// TODO: Replace with Supabase query
-async function getPerformance(id: string): Promise<PerformanceWithDetails | null> {
-  // Placeholder
-  return {
-    id,
-    artist_id: "a1",
-    title: "YOASOBI ASIA TOUR 2026 in KOREA",
-    venue: "KSPO DOME",
-    city: "서울",
-    start_date: "2026-04-15",
-    end_date: "2026-04-16",
-    ticket_open_at: "2026-04-10T20:00:00+09:00",
-    presale_open_at: null,
-    price_info: "VIP 198,000원 / R석 154,000원 / S석 110,000원",
-    status: "upcoming",
-    image_url: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    artist: {
-      id: "a1",
-      name_ko: "요아소비",
-      name_ja: "YOASOBI",
-      name_en: "YOASOBI",
-      image_url: null,
-      created_at: new Date().toISOString(),
-    },
-    source_listings: [
-      {
-        id: "s1",
-        performance_id: id,
-        source: "yes24",
-        source_url: "https://ticket.yes24.com/example",
-        source_id: "12345",
-        raw_title: "YOASOBI ASIA TOUR 2026 in KOREA",
-        raw_data: {},
-        ticket_open_at: "2026-04-10T20:00:00+09:00",
-        price_info: null,
-        last_crawled_at: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-      },
-      {
-        id: "s2",
-        performance_id: id,
-        source: "interpark",
-        source_url: "https://tickets.interpark.com/example",
-        source_id: "67890",
-        raw_title: "YOASOBI ASIA TOUR 2026 in KOREA",
-        raw_data: {},
-        ticket_open_at: "2026-04-10T20:00:00+09:00",
-        price_info: null,
-        last_crawled_at: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-      },
-    ],
-  };
-}
-
-const statusLabel: Record<string, string> = {
-  upcoming: "예정",
-  on_sale: "판매중",
-  sold_out: "매진",
-  completed: "종료",
+const statusConfig: Record<string, { label: string; className: string }> = {
+  upcoming: { label: "UPCOMING", className: "status-upcoming" },
+  on_sale: { label: "ON SALE", className: "status-on-sale" },
+  sold_out: { label: "SOLD OUT", className: "status-sold-out" },
+  completed: { label: "종료", className: "status-completed" },
 };
+
+async function getPerformance(
+  id: string
+): Promise<PerformanceWithDetails | null> {
+  const supabase = createServerClient();
+
+  const { data } = await supabase
+    .from("performances")
+    .select("*, artist:artists(*), source_listings(*)")
+    .eq("id", id)
+    .single();
+
+  return data as PerformanceWithDetails | null;
+}
 
 export default async function PerformanceDetailPage({
   params,
@@ -79,83 +36,138 @@ export default async function PerformanceDetailPage({
 
   if (!performance) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold">공연을 찾을 수 없습니다</h1>
-        <Link href="/" className="text-primary mt-4 inline-block">
+      <div className="mx-auto max-w-4xl px-6 py-24 text-center">
+        <h1 className="text-2xl font-bold text-[#131b2e]">
+          공연을 찾을 수 없습니다
+        </h1>
+        <Link href="/" className="text-[#0058be] mt-4 inline-block">
           홈으로 돌아가기
         </Link>
       </div>
     );
   }
 
-  return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
-      <Link
-        href="/"
-        className="text-sm text-muted-foreground hover:text-foreground mb-4 inline-block"
-      >
-        &larr; 캘린더로 돌아가기
-      </Link>
+  const status =
+    statusConfig[performance.status] || statusConfig.upcoming;
 
-      <div className="grid gap-6 md:grid-cols-3">
-        {/* Main info */}
-        <div className="md:col-span-2 space-y-4">
+  return (
+    <div className="mx-auto max-w-[1280px] px-6 pt-24 pb-20">
+      {/* Breadcrumbs */}
+      <div className="flex items-center gap-2 text-sm mb-8">
+        <Link
+          href="/"
+          className="font-medium text-[#424754] hover:text-[#131b2e]"
+        >
+          홈
+        </Link>
+        <span className="text-[#c2c6d6]">&rsaquo;</span>
+        <Link
+          href="/"
+          className="font-medium text-[#424754] hover:text-[#131b2e]"
+        >
+          콘서트
+        </Link>
+        <span className="text-[#c2c6d6]">&rsaquo;</span>
+        <span className="font-medium text-[#131b2e] truncate max-w-xs">
+          {performance.title}
+        </span>
+      </div>
+
+      <div className="flex gap-12 items-start">
+        {/* Left Column (2/3) */}
+        <div className="flex-1 min-w-0 space-y-10">
+          {/* Header */}
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Badge>{statusLabel[performance.status]}</Badge>
-              {performance.artist && (
-                <Link
-                  href={`/artists/${performance.artist.id}`}
-                  className="text-sm text-primary hover:underline"
+            <span
+              className={`${status.className} text-xs font-semibold uppercase tracking-[0.6px] px-3 py-1 rounded-xl inline-block mb-4`}
+            >
+              {status.label}
+            </span>
+            <h1 className="text-5xl font-extrabold text-[#131b2e] tracking-[-2.4px] leading-[48px] mb-4">
+              {performance.title}
+            </h1>
+            {performance.artist && (
+              <Link
+                href={`/artists/${performance.artist.id}`}
+                className="text-base font-semibold text-[#0058be] hover:underline inline-flex items-center gap-1"
+              >
+                {performance.artist.name_en || performance.artist.name_ko}
+                {performance.artist.name_ko &&
+                  performance.artist.name_en &&
+                  ` (${performance.artist.name_ko})`}
+                <svg
+                  className="w-3 h-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  {performance.artist.name_ko}
-                </Link>
-              )}
-            </div>
-            <h1 className="text-2xl font-bold">{performance.title}</h1>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </Link>
+            )}
           </div>
 
-          <div className="grid gap-3 text-sm">
-            <div className="flex gap-2">
-              <span className="font-medium w-20 shrink-0">공연일</span>
-              <span>
+          {/* Info Grid */}
+          <div className="bg-[#f2f3ff] rounded-lg p-8 grid grid-cols-2 gap-8">
+            <div>
+              <p className="text-xs font-semibold text-[#727785] uppercase tracking-[1.2px] mb-1">
+                CONCERT DATE
+              </p>
+              <p className="text-lg font-semibold text-[#131b2e]">
                 {formatDate(performance.start_date)}
                 {performance.end_date
                   ? ` ~ ${formatDate(performance.end_date)}`
                   : ""}
-              </span>
+              </p>
             </div>
-            {performance.venue && (
-              <div className="flex gap-2">
-                <span className="font-medium w-20 shrink-0">장소</span>
-                <span>
-                  {performance.venue}, {performance.city}
-                </span>
-              </div>
-            )}
+            <div>
+              <p className="text-xs font-semibold text-[#727785] uppercase tracking-[1.2px] mb-1">
+                VENUE
+              </p>
+              <p className="text-lg font-semibold text-[#131b2e]">
+                {performance.venue || "-"}
+                {performance.city ? `, ${performance.city}` : ""}
+              </p>
+            </div>
             {performance.ticket_open_at && (
-              <div className="flex gap-2">
-                <span className="font-medium w-20 shrink-0">티켓 오픈</span>
-                <span>{formatDateTime(performance.ticket_open_at)}</span>
+              <div>
+                <p className="text-xs font-semibold text-[#727785] uppercase tracking-[1.2px] mb-1">
+                  TICKET OPEN
+                </p>
+                <p className="text-lg font-semibold text-[#131b2e]">
+                  {formatDateTime(performance.ticket_open_at)}
+                </p>
               </div>
             )}
             {performance.price_info && (
-              <div className="flex gap-2">
-                <span className="font-medium w-20 shrink-0">가격</span>
-                <span>{performance.price_info}</span>
+              <div>
+                <p className="text-xs font-semibold text-[#727785] uppercase tracking-[1.2px] mb-1">
+                  PRICE
+                </p>
+                <p className="text-lg font-semibold text-[#131b2e]">
+                  {performance.price_info}
+                </p>
               </div>
             )}
           </div>
 
-          <SourceLinks listings={performance.source_listings} />
+          {/* Ticket Buttons */}
+          <SourceLinks
+            listings={performance.source_listings}
+            size="large"
+          />
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-4">
-          {performance.ticket_open_at &&
-            performance.status === "upcoming" && (
-              <TicketCountdown ticketOpenAt={performance.ticket_open_at} />
-            )}
+        {/* Right Column (1/3) */}
+        <div className="w-[395px] shrink-0 space-y-8 hidden lg:block">
+          {performance.ticket_open_at && (
+            <TicketCountdown ticketOpenAt={performance.ticket_open_at} />
+          )}
         </div>
       </div>
     </div>

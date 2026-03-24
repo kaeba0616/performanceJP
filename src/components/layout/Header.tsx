@@ -1,32 +1,84 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
+import { useState } from "react";
 
 export function Header() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [query, setQuery] = useState("");
+
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    const q = query.trim();
+    if (q) {
+      router.push(`/search?q=${encodeURIComponent(q)}`);
+    }
+  }
+
+  const navLinks = [
+    { href: "/", label: "캘린더" },
+    { href: "/artists", label: "아티스트" },
+    { href: "/subscribe", label: "알림 설정" },
+  ];
+
+  function isActive(href: string) {
+    if (href === "/") return pathname === "/";
+    return pathname.startsWith(href);
+  }
+
   return (
-    <header className="border-b bg-background">
-      <div className="mx-auto max-w-6xl flex items-center justify-between px-4 h-14">
-        <Link href="/" className="text-lg font-bold">
-          내한공연 트래커
-        </Link>
-        <nav className="flex items-center gap-6 text-sm">
+    <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-[12px] bg-[rgba(250,248,255,0.7)] shadow-[0px_1px_2px_0px_rgba(30,58,138,0.05)]">
+      <div className="mx-auto max-w-[1280px] flex items-center justify-between px-6 py-3">
+        <div className="flex items-center gap-8">
           <Link
             href="/"
-            className="text-muted-foreground hover:text-foreground transition-colors"
+            className="text-xl font-bold text-[#1e40af] tracking-[-1px]"
           >
-            캘린더
+            내한공연 트래커
           </Link>
-          <Link
-            href="/artists"
-            className="text-muted-foreground hover:text-foreground transition-colors"
-          >
-            아티스트
-          </Link>
-          <Link
-            href="/subscribe"
-            className="text-muted-foreground hover:text-foreground transition-colors"
-          >
-            알림 설정
-          </Link>
-        </nav>
+          <nav className="hidden md:flex items-center gap-6">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={
+                  isActive(link.href)
+                    ? "text-[#1d4ed8] font-bold text-base tracking-[-0.4px] border-b-2 border-[#2563eb] pb-0.5"
+                    : "text-[#475569] text-base tracking-[-0.4px] hover:text-[#1d4ed8] transition-colors"
+                }
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <form onSubmit={handleSearch} className="relative">
+            <svg
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-[14px] h-[14px] text-[#6b7280]"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+            <input
+              type="search"
+              placeholder="아티스트 검색..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="w-[256px] bg-[#f2f3ff] rounded pl-10 pr-4 py-1.5 text-sm tracking-[-0.4px] text-[#131b2e] placeholder:text-[#6b7280] focus:outline-none focus:ring-2 focus:ring-[#0058be]/30 transition-all"
+            />
+          </form>
+        </div>
       </div>
     </header>
   );
