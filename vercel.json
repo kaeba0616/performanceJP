@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/crawl-full",
+      "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/cron/crawl-updates",
+      "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/cron/send-notifications",
+      "schedule": "*/15 * * * *"
+    }
+  ]
+}
