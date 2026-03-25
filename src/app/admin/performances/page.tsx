@@ -119,19 +119,19 @@ export default function AdminPerformancesPage() {
                   performances.map((perf) => (
                     <tr key={perf.id} className="hover:bg-[#f9fafb]">
                       <td className="px-4 py-3 font-medium text-[#131b2e]">{perf.title}</td>
-                      <td className="px-4 py-3 text-[#424754]">{perf.artist?.name_ko || "-"}</td>
+                      <td className="px-4 py-3 text-[#424754] whitespace-nowrap">{perf.artist?.name_ko || "-"}</td>
                       <td className="px-4 py-3 text-[#424754] whitespace-nowrap">
                         {perf.start_date}
                         {perf.end_date && perf.end_date !== perf.start_date && ` ~ ${perf.end_date}`}
                       </td>
-                      <td className="px-4 py-3 text-[#424754]">{perf.venue || "-"}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 text-[#424754] whitespace-nowrap">{perf.venue || "-"}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColor[perf.status] || "bg-gray-100 text-gray-500"}`}>
                           {statusLabel[perf.status] || perf.status}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-[#424754]">{perf.source_listings?.[0]?.count || 0}건</td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 text-[#424754] whitespace-nowrap">{perf.source_listings?.[0]?.count || 0}건</td>
+                      <td className="px-4 py-3 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <Link
                             href={`/admin/performances/${perf.id}/edit`}
