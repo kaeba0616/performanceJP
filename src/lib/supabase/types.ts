@@ -18,6 +18,7 @@ export interface Database {
           image_url: string | null
           instagram_url: string | null
           youtube_url: string | null
+          x_url: string | null
           created_at: string
         }
         Insert: {
@@ -28,6 +29,7 @@ export interface Database {
           image_url?: string | null
           instagram_url?: string | null
           youtube_url?: string | null
+          x_url?: string | null
           created_at?: string
         }
         Update: {
@@ -38,6 +40,7 @@ export interface Database {
           image_url?: string | null
           instagram_url?: string | null
           youtube_url?: string | null
+          x_url?: string | null
           created_at?: string
         }
         Relationships: [

@@ -62,12 +62,12 @@ export function SourceLinks({
                   href={`https://time.navyism.com/?host=${config.timeHost}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-1.5 text-xs text-[#424754] hover:text-[#0058be] transition-colors py-1"
+                  className="flex items-center justify-center gap-1.5 text-sm font-semibold border-2 border-[#c2c6d6]/30 text-[#424754] hover:border-[#0058be] hover:text-[#0058be] rounded py-2.5 transition-all"
                 >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  {config.label} 서버시간 확인
+                  서버시간 확인
                 </a>
               )}
             </div>

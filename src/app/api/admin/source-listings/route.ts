@@ -6,24 +6,7 @@ function verifyAdmin(request: Request): boolean {
   return authHeader === `Bearer ${process.env.CRON_SECRET}`;
 }
 
-export async function GET(request: Request) {
-  if (!verifyAdmin(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const supabase = createServerClient();
-
-  const { data, error } = await supabase
-    .from("artists")
-    .select("*, performances(count)")
-    .order("name_ko");
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json({ artists: data });
-}
+const VALID_SOURCES = ["yes24", "interpark", "melon"] as const;
 
 export async function POST(request: Request) {
   if (!verifyAdmin(request)) {
@@ -31,11 +14,18 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { name_ko, name_ja, name_en } = body;
+  const { performance_id, source, source_url, raw_title, source_id, ticket_open_at, price_info } = body;
 
-  if (!name_ko) {
+  if (!performance_id || !source || !source_url || !raw_title) {
     return NextResponse.json(
-      { error: "name_ko is required" },
+      { error: "performance_id, source, source_url, and raw_title are required" },
+      { status: 400 }
+    );
+  }
+
+  if (!VALID_SOURCES.includes(source)) {
+    return NextResponse.json(
+      { error: `source must be one of: ${VALID_SOURCES.join(", ")}` },
       { status: 400 }
     );
   }
@@ -43,8 +33,8 @@ export async function POST(request: Request) {
   const supabase = createServerClient();
 
   const { data, error } = await supabase
-    .from("artists")
-    .insert({ name_ko, name_ja, name_en })
+    .from("source_listings")
+    .insert({ performance_id, source, source_url, raw_title, source_id, ticket_open_at, price_info })
     .select()
     .single();
 
@@ -52,5 +42,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true, artist: data });
+  return NextResponse.json({ success: true, source_listing: data });
 }

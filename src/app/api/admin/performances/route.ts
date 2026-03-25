@@ -14,15 +14,15 @@ export async function GET(request: Request) {
   const supabase = createServerClient();
 
   const { data, error } = await supabase
-    .from("artists")
-    .select("*, performances(count)")
-    .order("name_ko");
+    .from("performances")
+    .select("*, artist:artists(id, name_ko, name_en), source_listings(count)")
+    .order("start_date", { ascending: false });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ artists: data });
+  return NextResponse.json({ performances: data });
 }
 
 export async function POST(request: Request) {
@@ -31,11 +31,11 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { name_ko, name_ja, name_en } = body;
+  const { artist_id, title, venue, city, start_date, end_date, ticket_open_at, presale_open_at, price_info, status, image_url } = body;
 
-  if (!name_ko) {
+  if (!title || !start_date) {
     return NextResponse.json(
-      { error: "name_ko is required" },
+      { error: "title and start_date are required" },
       { status: 400 }
     );
   }
@@ -43,8 +43,8 @@ export async function POST(request: Request) {
   const supabase = createServerClient();
 
   const { data, error } = await supabase
-    .from("artists")
-    .insert({ name_ko, name_ja, name_en })
+    .from("performances")
+    .insert({ artist_id, title, venue, city, start_date, end_date, ticket_open_at, presale_open_at, price_info, status, image_url })
     .select()
     .single();
 
@@ -52,5 +52,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true, artist: data });
+  return NextResponse.json({ success: true, performance: data });
 }

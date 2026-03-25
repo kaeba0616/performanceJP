@@ -88,6 +88,19 @@ export default async function ArtistDetailPage({
                 </svg>
               </a>
             )}
+            {artist.x_url && (
+              <a
+                href={artist.x_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-9 h-9 rounded-lg bg-[#000000] flex items-center justify-center hover:opacity-80 transition-opacity"
+                title="X (Twitter)"
+              >
+                <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
+              </a>
+            )}
           </div>
           <p className="text-base text-[#424754] mt-1">
             {artist.name_ko}

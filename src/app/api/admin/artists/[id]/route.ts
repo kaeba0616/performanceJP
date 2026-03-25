@@ -6,45 +6,24 @@ function verifyAdmin(request: Request): boolean {
   return authHeader === `Bearer ${process.env.CRON_SECRET}`;
 }
 
-export async function GET(request: Request) {
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   if (!verifyAdmin(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const supabase = createServerClient();
-
-  const { data, error } = await supabase
-    .from("artists")
-    .select("*, performances(count)")
-    .order("name_ko");
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json({ artists: data });
-}
-
-export async function POST(request: Request) {
-  if (!verifyAdmin(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+  const { id } = await params;
   const body = await request.json();
-  const { name_ko, name_ja, name_en } = body;
-
-  if (!name_ko) {
-    return NextResponse.json(
-      { error: "name_ko is required" },
-      { status: 400 }
-    );
-  }
+  const { name_ko, name_ja, name_en, image_url, instagram_url, youtube_url, x_url } = body;
 
   const supabase = createServerClient();
 
   const { data, error } = await supabase
     .from("artists")
-    .insert({ name_ko, name_ja, name_en })
+    .update({ name_ko, name_ja, name_en, image_url, instagram_url, youtube_url, x_url })
+    .eq("id", id)
     .select()
     .single();
 
@@ -52,5 +31,32 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  if (!data) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   return NextResponse.json({ success: true, artist: data });
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  if (!verifyAdmin(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await params;
+  const supabase = createServerClient();
+
+  const { error } = await supabase
+    .from("artists")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true });
 }

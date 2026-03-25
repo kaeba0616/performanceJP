@@ -6,6 +6,7 @@ export interface Artist {
   image_url: string | null;
   instagram_url: string | null;
   youtube_url: string | null;
+  x_url: string | null;
   created_at: string;
 }
 
