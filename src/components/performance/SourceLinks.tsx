@@ -1,9 +1,21 @@
 import type { SourceListing } from "@/types";
 
-const sourceConfig: Record<string, { label: string; className: string }> = {
-  yes24: { label: "예스24", className: "btn-yes24" },
-  interpark: { label: "인터파크", className: "btn-interpark" },
-  melon: { label: "멜론티켓", className: "btn-melon" },
+const sourceConfig: Record<string, { label: string; className: string; timeHost: string }> = {
+  yes24: {
+    label: "예스24",
+    className: "btn-yes24",
+    timeHost: "ticket.yes24.com",
+  },
+  interpark: {
+    label: "인터파크",
+    className: "btn-interpark",
+    timeHost: "tickets.interpark.com",
+  },
+  melon: {
+    label: "멜론티켓",
+    className: "btn-melon",
+    timeHost: "ticket.melon.com",
+  },
 };
 
 export function SourceLinks({
@@ -29,21 +41,36 @@ export function SourceLinks({
           const config = sourceConfig[listing.source] || {
             label: listing.source,
             className: "bg-gray-500",
+            timeHost: "",
           };
           return (
-            <a
-              key={listing.id}
-              href={listing.source_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`${config.className} text-white font-bold text-center rounded transition-all ${
-                isLarge
-                  ? "py-4 text-base"
-                  : "px-4 py-2 text-xs rounded"
-              } inline-block`}
-            >
-              {isLarge ? `${config.label}에서 구매` : config.label}
-            </a>
+            <div key={listing.id} className={isLarge ? "flex flex-col gap-2" : ""}>
+              <a
+                href={listing.source_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`${config.className} text-white font-bold text-center rounded transition-all block ${
+                  isLarge
+                    ? "py-4 text-base"
+                    : "px-4 py-2 text-xs"
+                }`}
+              >
+                {isLarge ? `${config.label}에서 구매` : config.label}
+              </a>
+              {isLarge && config.timeHost && (
+                <a
+                  href={`https://time.navyism.com/?host=${config.timeHost}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-1.5 text-xs text-[#424754] hover:text-[#0058be] transition-colors py-1"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {config.label} 서버시간 확인
+                </a>
+              )}
+            </div>
           );
         })}
       </div>

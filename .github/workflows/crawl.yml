@@ -1,0 +1,29 @@
+name: Crawl Performances
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'   # 6시간마다
+  workflow_dispatch:          # 수동 실행 가능
+
+jobs:
+  crawl-full:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger full crawl
+        run: |
+          curl -X POST "${{ secrets.SITE_URL }}/api/cron/crawl-full" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            --fail --silent --show-error \
+            --max-time 300
+
+  crawl-updates:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger updates crawl
+        run: |
+          curl -X POST "${{ secrets.SITE_URL }}/api/cron/crawl-updates" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            --fail --silent --show-error \
+            --max-time 60

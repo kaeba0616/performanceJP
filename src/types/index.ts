@@ -4,6 +4,8 @@ export interface Artist {
   name_ja: string | null;
   name_en: string | null;
   image_url: string | null;
+  instagram_url: string | null;
+  youtube_url: string | null;
   created_at: string;
 }
 

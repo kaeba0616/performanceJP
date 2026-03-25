@@ -9,26 +9,32 @@ interface CalendarCellProps {
   month: number;
   day: number | null;
   performances: Performance[];
+  isSelected?: boolean;
+  onSelect?: (day: number) => void;
 }
 
-export function CalendarCell({ year, month, day, performances }: CalendarCellProps) {
+export function CalendarCell({ year, month, day, performances, isSelected, onSelect }: CalendarCellProps) {
   if (day === null) {
-    return <div className="min-h-24 bg-muted/30" />;
+    return <div className="min-h-[100px] bg-[#f2f3ff]/30" />;
   }
 
   const today = isToday(year, month, day);
+  const hasPerfs = performances.length > 0;
 
   return (
     <div
-      className={`min-h-24 border border-border/50 p-1 ${
-        today ? "bg-primary/5 ring-1 ring-primary/30" : ""
+      onClick={() => hasPerfs && onSelect?.(day)}
+      className={`min-h-[100px] border border-[rgba(194,198,214,0.15)] p-1.5 transition-colors ${
+        hasPerfs ? "cursor-pointer hover:bg-[#f2f3ff]/50" : ""
+      } ${isSelected ? "bg-[#f2f3ff] ring-2 ring-[#0058be]/30" : ""} ${
+        today && !isSelected ? "bg-[rgba(0,88,190,0.03)] ring-1 ring-[#0058be]/20" : ""
       }`}
     >
       <span
-        className={`text-sm font-medium ${
+        className={`text-sm font-medium inline-flex items-center justify-center ${
           today
-            ? "bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center"
-            : "text-muted-foreground"
+            ? "bg-[#0058be] text-white rounded-full w-6 h-6"
+            : "text-[#727785]"
         }`}
       >
         {day}
@@ -38,7 +44,7 @@ export function CalendarCell({ year, month, day, performances }: CalendarCellPro
           <PerformanceChip key={p.id} performance={p} />
         ))}
         {performances.length > 3 && (
-          <span className="text-[10px] text-muted-foreground pl-1">
+          <span className="text-[10px] text-[#727785] pl-1">
             +{performances.length - 3}개 더
           </span>
         )}
