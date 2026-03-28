@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import type { Performance } from "@/types";
 
 const statusConfig: Record<string, { className: string }> = {
@@ -18,12 +17,11 @@ export function PerformanceChip({
   const status = statusConfig[performance.status] || statusConfig.upcoming;
 
   return (
-    <Link
-      href={`/performances/${performance.id}`}
-      className={`block text-[10px] font-bold truncate rounded-sm px-1.5 py-0.5 transition-opacity hover:opacity-80 ${status.className}`}
+    <span
+      className={`block text-[10px] font-bold truncate rounded-sm px-1.5 py-0.5 ${status.className}`}
       title={performance.title}
     >
       {performance.artist?.name_ko || performance.title}
-    </Link>
+    </span>
   );
 }
