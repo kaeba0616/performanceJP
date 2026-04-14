@@ -96,16 +96,16 @@ export default function AdminPerformancesPage() {
       ) : (
         <div className="bg-white rounded-lg shadow-sm border border-[#e5e7eb] overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full min-w-[720px] text-sm">
               <thead>
                 <tr className="border-b border-[#e5e7eb] bg-[#f9fafb]">
-                  <th className="text-left px-4 py-3 font-medium text-[#424754]">제목</th>
-                  <th className="text-left px-4 py-3 font-medium text-[#424754]">아티스트</th>
-                  <th className="text-left px-4 py-3 font-medium text-[#424754]">날짜</th>
-                  <th className="text-left px-4 py-3 font-medium text-[#424754]">장소</th>
-                  <th className="text-left px-4 py-3 font-medium text-[#424754]">상태</th>
-                  <th className="text-left px-4 py-3 font-medium text-[#424754]">티켓링크</th>
-                  <th className="text-left px-4 py-3 font-medium text-[#424754]">액션</th>
+                  <th className="text-left px-4 py-3 font-medium text-[#424754] whitespace-nowrap">제목</th>
+                  <th className="text-left px-4 py-3 font-medium text-[#424754] whitespace-nowrap">아티스트</th>
+                  <th className="text-left px-4 py-3 font-medium text-[#424754] whitespace-nowrap">날짜</th>
+                  <th className="text-left px-4 py-3 font-medium text-[#424754] whitespace-nowrap">장소</th>
+                  <th className="text-left px-4 py-3 font-medium text-[#424754] whitespace-nowrap">상태</th>
+                  <th className="text-left px-4 py-3 font-medium text-[#424754] whitespace-nowrap">티켓링크</th>
+                  <th className="text-left px-4 py-3 font-medium text-[#424754] whitespace-nowrap">액션</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#e5e7eb]">

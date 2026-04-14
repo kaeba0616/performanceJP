@@ -5,8 +5,18 @@ import { CalendarCell } from "./CalendarCell";
 import { Button } from "@/components/ui/button";
 import { getDaysInMonth, getFirstDayOfMonth, getMonthName, formatDate } from "@/lib/utils/date";
 import { PerformanceChip } from "./PerformanceChip";
-import type { Performance } from "@/types";
+import { normalizeSongs, type Performance } from "@/types";
 import Link from "next/link";
+
+function SetlistBadge({ setlist }: { setlist: unknown }) {
+  const count = normalizeSongs(setlist).length;
+  if (count === 0) return null;
+  return (
+    <span className="inline-flex items-center bg-[#f2f3ff] text-[#0058be] text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap">
+      셋리스트 {count}곡
+    </span>
+  );
+}
 
 interface CalendarGridProps {
   performances: Performance[];
@@ -148,6 +158,7 @@ export function CalendarGrid({ performances }: CalendarGridProps) {
                         {p.venue}
                       </span>
                     )}
+                    <SetlistBadge setlist={p.setlist} />
                   </div>
                 </div>
                 <svg className="w-5 h-5 text-[#727785] shrink-0 ml-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -179,9 +190,12 @@ export function CalendarGrid({ performances }: CalendarGridProps) {
                     className="block p-2 rounded hover:bg-[#f2f3ff]/50 transition-colors"
                   >
                     <p className="font-bold text-sm text-[#131b2e] truncate">{p.title}</p>
-                    <p className="text-xs text-[#424754]">
-                      {p.artist?.name_ko}{p.venue ? ` · ${p.venue}` : ""}
-                    </p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <p className="text-xs text-[#424754]">
+                        {p.artist?.name_ko}{p.venue ? ` · ${p.venue}` : ""}
+                      </p>
+                      <SetlistBadge setlist={p.setlist} />
+                    </div>
                   </Link>
                 ))}
               </div>

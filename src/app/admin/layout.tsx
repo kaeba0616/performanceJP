@@ -23,7 +23,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const stored = localStorage.getItem("admin_token");
     if (stored) setToken(stored);
     const savedCollapsed = localStorage.getItem("admin_sidebar_collapsed");
-    if (savedCollapsed === "true") setCollapsed(true);
+    const isMobile =
+      typeof window !== "undefined" && window.innerWidth < 768;
+    if (isMobile || savedCollapsed === "true") setCollapsed(true);
     setChecking(false);
   }, []);
 
@@ -104,7 +106,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {!collapsed && <h1 className="text-lg font-bold text-[#131b2e]">관리자</h1>}
           <button
             onClick={toggleSidebar}
-            className="text-[#424754] hover:text-[#131b2e] transition-colors"
+            className="hidden md:block text-[#424754] hover:text-[#131b2e] transition-colors"
             title={collapsed ? "사이드바 펼치기" : "사이드바 접기"}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -157,7 +159,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* Main content */}
-      <main className={`flex-1 p-8 transition-all duration-200 ${collapsed ? "ml-16" : "ml-56"}`}>
+      <main className={`flex-1 p-4 md:p-8 transition-all duration-200 ${collapsed ? "ml-16" : "ml-56"}`}>
         {children}
       </main>
     </div>

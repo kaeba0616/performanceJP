@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import type { Song } from "@/types";
 
 interface SongEditorProps {
@@ -9,8 +10,43 @@ interface SongEditorProps {
   titlePlaceholder?: string;
 }
 
+interface Row {
+  id: string;
+  song: Song;
+}
+
 const inputClass =
   "w-full border border-[#d1d5db] rounded-lg px-3 py-1.5 text-sm text-[#131b2e] focus:outline-none focus:ring-2 focus:ring-[#0058be]/30 focus:border-[#0058be]";
+
+function uid(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+
+function rowsFromValue(value: Song[], prev: Row[] = []): Row[] {
+  return value.map((song, i) => {
+    const existing = prev[i];
+    if (
+      existing &&
+      existing.song.title === song.title &&
+      existing.song.youtube_url === song.youtube_url
+    ) {
+      return existing;
+    }
+    return { id: uid(), song };
+  });
+}
+
+function sameContent(rows: Row[], value: Song[]): boolean {
+  if (rows.length !== value.length) return false;
+  for (let i = 0; i < rows.length; i++) {
+    if (rows[i].song.title !== value[i].title) return false;
+    if (rows[i].song.youtube_url !== value[i].youtube_url) return false;
+  }
+  return true;
+}
 
 export function SongEditor({
   value,
@@ -18,27 +54,39 @@ export function SongEditor({
   label,
   titlePlaceholder = "곡 제목",
 }: SongEditorProps) {
+  const [rows, setRows] = useState<Row[]>(() => rowsFromValue(value));
+
+  useEffect(() => {
+    setRows((prev) => (sameContent(prev, value) ? prev : rowsFromValue(value, prev)));
+  }, [value]);
+
+  function commit(next: Row[]) {
+    setRows(next);
+    onChange(next.map((r) => r.song));
+  }
+
   function updateAt(index: number, patch: Partial<Song>) {
-    const next = value.map((song, i) =>
-      i === index ? { ...song, ...patch } : song
+    commit(
+      rows.map((r, i) =>
+        i === index ? { id: r.id, song: { ...r.song, ...patch } } : r
+      )
     );
-    onChange(next);
   }
 
   function removeAt(index: number) {
-    onChange(value.filter((_, i) => i !== index));
+    commit(rows.filter((_, i) => i !== index));
   }
 
   function moveBy(index: number, delta: number) {
     const target = index + delta;
-    if (target < 0 || target >= value.length) return;
-    const next = [...value];
+    if (target < 0 || target >= rows.length) return;
+    const next = [...rows];
     [next[index], next[target]] = [next[target], next[index]];
-    onChange(next);
+    commit(next);
   }
 
   function addRow() {
-    onChange([...value, { title: "", youtube_url: null }]);
+    commit([...rows, { id: uid(), song: { title: "", youtube_url: null } }]);
   }
 
   return (
@@ -46,25 +94,25 @@ export function SongEditor({
       {label && (
         <div className="text-xs font-semibold text-[#424754]">{label}</div>
       )}
-      {value.length === 0 && (
+      {rows.length === 0 && (
         <p className="text-xs text-[#727785]">등록된 곡이 없습니다.</p>
       )}
-      {value.map((song, idx) => (
-        <div key={idx} className="flex items-start gap-2">
+      {rows.map((row, idx) => (
+        <div key={row.id} className="flex items-start gap-2">
           <span className="pt-1.5 w-5 text-xs text-[#727785] tabular-nums text-right">
             {idx + 1}
           </span>
           <div className="flex-1 grid grid-cols-1 sm:grid-cols-5 gap-2">
             <input
               type="text"
-              value={song.title}
+              value={row.song.title}
               onChange={(e) => updateAt(idx, { title: e.target.value })}
               className={`${inputClass} sm:col-span-2`}
               placeholder={titlePlaceholder}
             />
             <input
               type="url"
-              value={song.youtube_url ?? ""}
+              value={row.song.youtube_url ?? ""}
               onChange={(e) =>
                 updateAt(idx, { youtube_url: e.target.value || null })
               }
@@ -85,7 +133,7 @@ export function SongEditor({
             <button
               type="button"
               onClick={() => moveBy(idx, 1)}
-              disabled={idx === value.length - 1}
+              disabled={idx === rows.length - 1}
               className="w-7 h-7 rounded border border-[#d1d5db] text-[#424754] text-xs hover:bg-[#f9fafb] disabled:opacity-30 disabled:cursor-not-allowed"
               title="아래로"
             >

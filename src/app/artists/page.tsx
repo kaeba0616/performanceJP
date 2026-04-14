@@ -1,4 +1,5 @@
 import { createServerClient } from "@/lib/supabase/server";
+import { normalizeSongs } from "@/types";
 import Link from "next/link";
 
 const avatarColors = [
@@ -61,9 +62,16 @@ export default async function ArtistsPage() {
                         ? ` / ${artist.name_ja}`
                         : ""}
                     </p>
-                    <p className="text-xs text-[#727785]">
-                      공연 {artist.performanceCount}건
-                    </p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <p className="text-xs text-[#727785]">
+                        공연 {artist.performanceCount}건
+                      </p>
+                      {normalizeSongs(artist.hit_songs).length > 0 && (
+                        <span className="inline-flex items-center bg-[#f2f3ff] text-[#0058be] text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap">
+                          대표곡 {normalizeSongs(artist.hit_songs).length}곡
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </Link>

@@ -282,21 +282,22 @@ export default function AdminArtistsPage() {
       ) : (
         <div className="bg-white rounded-lg shadow-sm border border-[#e5e7eb] overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full min-w-[720px] text-sm">
               <thead>
                 <tr className="border-b border-[#e5e7eb] bg-[#f9fafb]">
-                  <th className="text-left px-4 py-3 font-medium text-[#424754]">이름(한)</th>
-                  <th className="text-left px-4 py-3 font-medium text-[#424754]">이름(영)</th>
-                  <th className="text-left px-4 py-3 font-medium text-[#424754]">이름(일)</th>
-                  <th className="text-left px-4 py-3 font-medium text-[#424754]">SNS</th>
-                  <th className="text-left px-4 py-3 font-medium text-[#424754]">공연수</th>
-                  <th className="text-left px-4 py-3 font-medium text-[#424754]">액션</th>
+                  <th className="text-left px-4 py-3 font-medium text-[#424754] whitespace-nowrap">이름(한)</th>
+                  <th className="text-left px-4 py-3 font-medium text-[#424754] whitespace-nowrap">이름(영)</th>
+                  <th className="text-left px-4 py-3 font-medium text-[#424754] whitespace-nowrap">이름(일)</th>
+                  <th className="text-left px-4 py-3 font-medium text-[#424754] whitespace-nowrap">SNS</th>
+                  <th className="text-left px-4 py-3 font-medium text-[#424754] whitespace-nowrap">대표곡</th>
+                  <th className="text-left px-4 py-3 font-medium text-[#424754] whitespace-nowrap">공연수</th>
+                  <th className="text-left px-4 py-3 font-medium text-[#424754] whitespace-nowrap">액션</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#e5e7eb]">
                 {artists.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-[#424754]">
+                    <td colSpan={7} className="px-4 py-8 text-center text-[#424754]">
                       등록된 아티스트가 없습니다.
                     </td>
                   </tr>
@@ -347,6 +348,9 @@ export default function AdminArtistsPage() {
                               />
                             </div>
                           </td>
+                          <td className="px-4 py-2 text-[#424754] tabular-nums">
+                            {normalizeSongs(artist.hit_songs).length || 0}
+                          </td>
                           <td className="px-4 py-2 text-[#424754]">{artist.performances?.[0]?.count || 0}</td>
                           <td className="px-4 py-2">
                             <div className="flex items-center gap-2">
@@ -367,7 +371,7 @@ export default function AdminArtistsPage() {
                           </td>
                         </tr>
                         <tr className="bg-[#f0f7ff]">
-                          <td colSpan={6} className="px-4 pb-4 pt-0">
+                          <td colSpan={7} className="px-4 pb-4 pt-0">
                             <SongEditor
                               label="대표곡"
                               value={editForm.hit_songs}
@@ -380,9 +384,9 @@ export default function AdminArtistsPage() {
                       </Fragment>
                     ) : (
                       <tr key={artist.id} className="hover:bg-[#f9fafb]">
-                        <td className="px-4 py-3 font-medium text-[#131b2e]">{artist.name_ko}</td>
-                        <td className="px-4 py-3 text-[#424754]">{artist.name_en || "-"}</td>
-                        <td className="px-4 py-3 text-[#424754]">{artist.name_ja || "-"}</td>
+                        <td className="px-4 py-3 font-medium text-[#131b2e] whitespace-nowrap">{artist.name_ko}</td>
+                        <td className="px-4 py-3 text-[#424754] whitespace-nowrap">{artist.name_en || "-"}</td>
+                        <td className="px-4 py-3 text-[#424754] whitespace-nowrap">{artist.name_ja || "-"}</td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             {artist.instagram_url && (
@@ -410,8 +414,11 @@ export default function AdminArtistsPage() {
                             )}
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-[#424754]">{artist.performances?.[0]?.count || 0}</td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 text-[#424754] tabular-nums whitespace-nowrap">
+                          {normalizeSongs(artist.hit_songs).length || 0}
+                        </td>
+                        <td className="px-4 py-3 text-[#424754] whitespace-nowrap">{artist.performances?.[0]?.count || 0}</td>
+                        <td className="px-4 py-3 whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => startEdit(artist)}

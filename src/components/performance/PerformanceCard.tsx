@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { formatDate } from "@/lib/utils/date";
-import type { Performance } from "@/types";
+import { normalizeSongs, type Performance } from "@/types";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   upcoming: { label: "UPCOMING", className: "status-upcoming" },
@@ -16,6 +16,7 @@ export function PerformanceCard({
 }) {
   const status = statusConfig[performance.status] || statusConfig.upcoming;
   const isSoldOut = performance.status === "sold_out" || performance.status === "completed";
+  const setlistCount = normalizeSongs(performance.setlist).length;
 
   return (
     <Link href={`/performances/${performance.id}`}>
@@ -40,11 +41,18 @@ export function PerformanceCard({
         </h4>
 
         {performance.venue && (
-          <div className="flex items-center gap-1 mb-4">
-            <svg className="w-[10px] h-[12px] text-[#424754] shrink-0" fill="currentColor" viewBox="0 0 10 12">
-              <path d="M5 0C2.24 0 0 2.24 0 5c0 3.5 5 7 5 7s5-3.5 5-7c0-2.76-2.24-5-5-5zm0 6.75c-.97 0-1.75-.78-1.75-1.75S4.03 3.25 5 3.25 6.75 4.03 6.75 5 5.97 6.75 5 6.75z" />
-            </svg>
-            <span className="text-sm text-[#424754]">{performance.venue}</span>
+          <div className="flex items-center gap-2 mb-4 flex-wrap">
+            <div className="flex items-center gap-1">
+              <svg className="w-[10px] h-[12px] text-[#424754] shrink-0" fill="currentColor" viewBox="0 0 10 12">
+                <path d="M5 0C2.24 0 0 2.24 0 5c0 3.5 5 7 5 7s5-3.5 5-7c0-2.76-2.24-5-5-5zm0 6.75c-.97 0-1.75-.78-1.75-1.75S4.03 3.25 5 3.25 6.75 4.03 6.75 5 5.97 6.75 5 6.75z" />
+              </svg>
+              <span className="text-sm text-[#424754]">{performance.venue}</span>
+            </div>
+            {setlistCount > 0 && (
+              <span className="inline-flex items-center bg-[#f2f3ff] text-[#0058be] text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap">
+                셋리스트 {setlistCount}곡
+              </span>
+            )}
           </div>
         )}
 

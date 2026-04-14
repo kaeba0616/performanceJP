@@ -3,6 +3,37 @@ export interface Song {
   youtube_url: string | null;
 }
 
+function normalizeYouTubeUrl(raw: string): string {
+  const trimmed = raw.trim();
+  let parsed: URL;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    return trimmed;
+  }
+  const host = parsed.host.toLowerCase();
+  const buildWatch = (id: string, t?: string | null) => {
+    const out = new URL("https://www.youtube.com/watch");
+    out.searchParams.set("v", id);
+    if (t) out.searchParams.set("t", t);
+    return out.toString();
+  };
+  if (host === "youtu.be" || host === "www.youtu.be") {
+    const id = parsed.pathname.replace(/^\/+/, "").split("/")[0];
+    if (id) return buildWatch(id, parsed.searchParams.get("t"));
+    return trimmed;
+  }
+  if (host === "youtube.com" || host === "www.youtube.com" || host === "m.youtube.com") {
+    if (parsed.pathname === "/watch") {
+      const id = parsed.searchParams.get("v");
+      if (id) return buildWatch(id, parsed.searchParams.get("t"));
+    }
+    const shorts = parsed.pathname.match(/^\/shorts\/([^/]+)/);
+    if (shorts) return buildWatch(shorts[1], parsed.searchParams.get("t"));
+  }
+  return trimmed;
+}
+
 export function normalizeSongs(value: unknown): Song[] {
   if (!Array.isArray(value)) return [];
   const out: Song[] = [];
@@ -11,10 +42,11 @@ export function normalizeSongs(value: unknown): Song[] {
     const raw = item as Record<string, unknown>;
     const title = typeof raw.title === "string" ? raw.title.trim() : "";
     if (!title) continue;
-    const url =
+    const urlRaw =
       typeof raw.youtube_url === "string" && raw.youtube_url.trim()
         ? raw.youtube_url.trim()
         : null;
+    const url = urlRaw ? normalizeYouTubeUrl(urlRaw) : null;
     out.push({ title, youtube_url: url });
   }
   return out;
