@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import type { Json } from "@/lib/supabase/types";
+import { normalizeSongs } from "@/types";
 
 function verifyAdmin(request: Request): boolean {
   const authHeader = request.headers.get("authorization");
@@ -31,7 +33,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { name_ko, name_ja, name_en } = body;
+  const { name_ko, name_ja, name_en, hit_songs } = body;
 
   if (!name_ko) {
     return NextResponse.json(
@@ -40,11 +42,17 @@ export async function POST(request: Request) {
     );
   }
 
+  const cleanedSongs = normalizeSongs(hit_songs);
   const supabase = createServerClient();
 
   const { data, error } = await supabase
     .from("artists")
-    .insert({ name_ko, name_ja, name_en })
+    .insert({
+      name_ko,
+      name_ja,
+      name_en,
+      hit_songs: (cleanedSongs.length ? cleanedSongs : null) as Json | null,
+    })
     .select()
     .single();
 

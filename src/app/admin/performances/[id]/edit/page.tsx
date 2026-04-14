@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { SongEditor } from "@/components/admin/SongEditor";
+import { normalizeSongs, type Song } from "@/types";
 
 interface ArtistOption {
   id: string;
@@ -46,6 +48,7 @@ export default function EditPerformancePage() {
   const [presaleOpenAt, setPresaleOpenAt] = useState("");
   const [priceInfo, setPriceInfo] = useState("");
   const [status, setStatus] = useState("upcoming");
+  const [setlist, setSetlist] = useState<Song[]>([]);
 
   useEffect(() => {
     setToken(localStorage.getItem("admin_token"));
@@ -74,6 +77,7 @@ export default function EditPerformancePage() {
         setPresaleOpenAt(perf.presale_open_at ? perf.presale_open_at.slice(0, 16) : "");
         setPriceInfo(perf.price_info || "");
         setStatus(perf.status || "upcoming");
+        setSetlist(normalizeSongs(perf.setlist));
         setExistingLinks(perf.source_listings || []);
       } else {
         setError("공연 정보를 불러올 수 없습니다.");
@@ -136,6 +140,13 @@ export default function EditPerformancePage() {
     try {
       const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
 
+      const cleanedSetlist = setlist
+        .map((s) => ({
+          title: s.title.trim(),
+          youtube_url: s.youtube_url?.trim() || null,
+        }))
+        .filter((s) => s.title.length > 0);
+
       // Update performance
       const perfRes = await fetch(`/api/admin/performances/${id}`, {
         method: "PUT",
@@ -151,6 +162,7 @@ export default function EditPerformancePage() {
           presale_open_at: presaleOpenAt || null,
           price_info: priceInfo.trim() || null,
           status,
+          setlist: cleanedSetlist.length ? cleanedSetlist : null,
         }),
       });
 
@@ -275,6 +287,12 @@ export default function EditPerformancePage() {
               <option value="completed">종료</option>
             </select>
           </div>
+        </div>
+
+        {/* Setlist */}
+        <div className="bg-white rounded-lg shadow-sm border border-[#e5e7eb] p-6">
+          <h2 className="text-base font-semibold text-[#131b2e] mb-4">셋리스트</h2>
+          <SongEditor value={setlist} onChange={setSetlist} />
         </div>
 
         {/* Existing source links */}

@@ -1,8 +1,9 @@
 import { TicketCountdown } from "@/components/performance/TicketCountdown";
 import { SourceLinks } from "@/components/performance/SourceLinks";
+import { SongList } from "@/components/SongList";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatDateTime } from "@/lib/utils/date";
-import type { PerformanceWithDetails } from "@/types";
+import { normalizeSongs, type PerformanceWithDetails } from "@/types";
 import Link from "next/link";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
@@ -160,6 +161,11 @@ export default async function PerformanceDetailPage({
           <SourceLinks
             listings={performance.source_listings}
             size="large"
+          />
+
+          <SongList
+            songs={normalizeSongs(performance.setlist)}
+            title="셋리스트"
           />
         </div>
 

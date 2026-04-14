@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { Fragment, useState, useEffect, useCallback } from "react";
+import { SongEditor } from "@/components/admin/SongEditor";
+import { normalizeSongs, type Song } from "@/types";
 
 interface ArtistRow {
   id: string;
@@ -9,6 +11,7 @@ interface ArtistRow {
   name_ja: string | null;
   instagram_url: string | null;
   youtube_url: string | null;
+  hit_songs: unknown;
   performances: { count: number }[];
 }
 
@@ -18,9 +21,17 @@ interface ArtistForm {
   name_ja: string;
   instagram_url: string;
   youtube_url: string;
+  hit_songs: Song[];
 }
 
-const emptyForm: ArtistForm = { name_ko: "", name_en: "", name_ja: "", instagram_url: "", youtube_url: "" };
+const emptyForm: ArtistForm = {
+  name_ko: "",
+  name_en: "",
+  name_ja: "",
+  instagram_url: "",
+  youtube_url: "",
+  hit_songs: [],
+};
 
 export default function AdminArtistsPage() {
   const [token, setToken] = useState<string | null>(null);
@@ -60,11 +71,21 @@ export default function AdminArtistsPage() {
     fetchArtists();
   }, [fetchArtists]);
 
+  function sanitizeSongs(songs: Song[]): Song[] {
+    return songs
+      .map((s) => ({
+        title: s.title.trim(),
+        youtube_url: s.youtube_url?.trim() || null,
+      }))
+      .filter((s) => s.title.length > 0);
+  }
+
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     if (!addForm.name_ko.trim()) return;
     setSubmitting(true);
     try {
+      const cleanedSongs = sanitizeSongs(addForm.hit_songs);
       const res = await fetch("/api/admin/artists", {
         method: "POST",
         headers: headers(),
@@ -72,6 +93,7 @@ export default function AdminArtistsPage() {
           name_ko: addForm.name_ko.trim(),
           name_en: addForm.name_en.trim() || null,
           name_ja: addForm.name_ja.trim() || null,
+          hit_songs: cleanedSongs.length ? cleanedSongs : null,
         }),
       });
       if (res.ok) {
@@ -87,10 +109,11 @@ export default function AdminArtistsPage() {
               name_ja: addForm.name_ja.trim() || null,
               instagram_url: addForm.instagram_url.trim() || null,
               youtube_url: addForm.youtube_url.trim() || null,
+              hit_songs: cleanedSongs.length ? cleanedSongs : null,
             }),
           });
         }
-        setAddForm({ ...emptyForm });
+        setAddForm({ ...emptyForm, hit_songs: [] });
         fetchArtists();
       } else {
         const err = await res.json();
@@ -111,12 +134,13 @@ export default function AdminArtistsPage() {
       name_ja: artist.name_ja || "",
       instagram_url: artist.instagram_url || "",
       youtube_url: artist.youtube_url || "",
+      hit_songs: normalizeSongs(artist.hit_songs),
     });
   }
 
   function cancelEdit() {
     setEditingId(null);
-    setEditForm({ ...emptyForm });
+    setEditForm({ ...emptyForm, hit_songs: [] });
   }
 
   async function handleEdit(e: React.FormEvent) {
@@ -124,6 +148,7 @@ export default function AdminArtistsPage() {
     if (!editingId || !editForm.name_ko.trim()) return;
     setSubmitting(true);
     try {
+      const cleanedSongs = sanitizeSongs(editForm.hit_songs);
       const res = await fetch(`/api/admin/artists/${editingId}`, {
         method: "PUT",
         headers: headers(),
@@ -133,11 +158,12 @@ export default function AdminArtistsPage() {
           name_ja: editForm.name_ja.trim() || null,
           instagram_url: editForm.instagram_url.trim() || null,
           youtube_url: editForm.youtube_url.trim() || null,
+          hit_songs: cleanedSongs.length ? cleanedSongs : null,
         }),
       });
       if (res.ok) {
         setEditingId(null);
-        setEditForm({ ...emptyForm });
+        setEditForm({ ...emptyForm, hit_songs: [] });
         fetchArtists();
       } else {
         const err = await res.json();
@@ -235,6 +261,11 @@ export default function AdminArtistsPage() {
               />
             </div>
           </div>
+          <SongEditor
+            label="대표곡"
+            value={addForm.hit_songs}
+            onChange={(hit_songs) => setAddForm((f) => ({ ...f, hit_songs }))}
+          />
           <button
             type="submit"
             disabled={submitting}
@@ -272,68 +303,81 @@ export default function AdminArtistsPage() {
                 ) : (
                   artists.map((artist) =>
                     editingId === artist.id ? (
-                      <tr key={artist.id} className="bg-[#f0f7ff]">
-                        <td className="px-4 py-2">
-                          <input
-                            type="text"
-                            value={editForm.name_ko}
-                            onChange={(e) => setEditForm((f) => ({ ...f, name_ko: e.target.value }))}
-                            className={inputClass}
-                          />
-                        </td>
-                        <td className="px-4 py-2">
-                          <input
-                            type="text"
-                            value={editForm.name_en}
-                            onChange={(e) => setEditForm((f) => ({ ...f, name_en: e.target.value }))}
-                            className={inputClass}
-                          />
-                        </td>
-                        <td className="px-4 py-2">
-                          <input
-                            type="text"
-                            value={editForm.name_ja}
-                            onChange={(e) => setEditForm((f) => ({ ...f, name_ja: e.target.value }))}
-                            className={inputClass}
-                          />
-                        </td>
-                        <td className="px-4 py-2">
-                          <div className="space-y-1">
+                      <Fragment key={artist.id}>
+                        <tr className="bg-[#f0f7ff]">
+                          <td className="px-4 py-2">
                             <input
-                              type="url"
-                              value={editForm.instagram_url}
-                              onChange={(e) => setEditForm((f) => ({ ...f, instagram_url: e.target.value }))}
+                              type="text"
+                              value={editForm.name_ko}
+                              onChange={(e) => setEditForm((f) => ({ ...f, name_ko: e.target.value }))}
                               className={inputClass}
-                              placeholder="Instagram"
                             />
+                          </td>
+                          <td className="px-4 py-2">
                             <input
-                              type="url"
-                              value={editForm.youtube_url}
-                              onChange={(e) => setEditForm((f) => ({ ...f, youtube_url: e.target.value }))}
+                              type="text"
+                              value={editForm.name_en}
+                              onChange={(e) => setEditForm((f) => ({ ...f, name_en: e.target.value }))}
                               className={inputClass}
-                              placeholder="YouTube"
                             />
-                          </div>
-                        </td>
-                        <td className="px-4 py-2 text-[#424754]">{artist.performances?.[0]?.count || 0}</td>
-                        <td className="px-4 py-2">
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={handleEdit}
-                              disabled={submitting}
-                              className="text-[#0058be] hover:text-[#004a9e] text-sm font-medium disabled:opacity-50"
-                            >
-                              저장
-                            </button>
-                            <button
-                              onClick={cancelEdit}
-                              className="text-[#424754] hover:text-[#131b2e] text-sm font-medium"
-                            >
-                              취소
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
+                          </td>
+                          <td className="px-4 py-2">
+                            <input
+                              type="text"
+                              value={editForm.name_ja}
+                              onChange={(e) => setEditForm((f) => ({ ...f, name_ja: e.target.value }))}
+                              className={inputClass}
+                            />
+                          </td>
+                          <td className="px-4 py-2">
+                            <div className="space-y-1">
+                              <input
+                                type="url"
+                                value={editForm.instagram_url}
+                                onChange={(e) => setEditForm((f) => ({ ...f, instagram_url: e.target.value }))}
+                                className={inputClass}
+                                placeholder="Instagram"
+                              />
+                              <input
+                                type="url"
+                                value={editForm.youtube_url}
+                                onChange={(e) => setEditForm((f) => ({ ...f, youtube_url: e.target.value }))}
+                                className={inputClass}
+                                placeholder="YouTube"
+                              />
+                            </div>
+                          </td>
+                          <td className="px-4 py-2 text-[#424754]">{artist.performances?.[0]?.count || 0}</td>
+                          <td className="px-4 py-2">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={handleEdit}
+                                disabled={submitting}
+                                className="text-[#0058be] hover:text-[#004a9e] text-sm font-medium disabled:opacity-50"
+                              >
+                                저장
+                              </button>
+                              <button
+                                onClick={cancelEdit}
+                                className="text-[#424754] hover:text-[#131b2e] text-sm font-medium"
+                              >
+                                취소
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                        <tr className="bg-[#f0f7ff]">
+                          <td colSpan={6} className="px-4 pb-4 pt-0">
+                            <SongEditor
+                              label="대표곡"
+                              value={editForm.hit_songs}
+                              onChange={(hit_songs) =>
+                                setEditForm((f) => ({ ...f, hit_songs }))
+                              }
+                            />
+                          </td>
+                        </tr>
+                      </Fragment>
                     ) : (
                       <tr key={artist.id} className="hover:bg-[#f9fafb]">
                         <td className="px-4 py-3 font-medium text-[#131b2e]">{artist.name_ko}</td>

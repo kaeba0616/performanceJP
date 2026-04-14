@@ -19,6 +19,7 @@ export interface Database {
           instagram_url: string | null
           youtube_url: string | null
           x_url: string | null
+          hit_songs: Json | null
           created_at: string
         }
         Insert: {
@@ -30,6 +31,7 @@ export interface Database {
           instagram_url?: string | null
           youtube_url?: string | null
           x_url?: string | null
+          hit_songs?: Json | null
           created_at?: string
         }
         Update: {
@@ -41,6 +43,7 @@ export interface Database {
           instagram_url?: string | null
           youtube_url?: string | null
           x_url?: string | null
+          hit_songs?: Json | null
           created_at?: string
         }
         Relationships: [
@@ -67,6 +70,7 @@ export interface Database {
           price_info: string | null
           status: string
           image_url: string | null
+          setlist: Json | null
           created_at: string
           updated_at: string
         }
@@ -83,6 +87,7 @@ export interface Database {
           price_info?: string | null
           status?: string
           image_url?: string | null
+          setlist?: Json | null
           created_at?: string
           updated_at?: string
         }
@@ -99,6 +104,7 @@ export interface Database {
           price_info?: string | null
           status?: string
           image_url?: string | null
+          setlist?: Json | null
           created_at?: string
           updated_at?: string
         }

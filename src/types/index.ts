@@ -1,3 +1,25 @@
+export interface Song {
+  title: string;
+  youtube_url: string | null;
+}
+
+export function normalizeSongs(value: unknown): Song[] {
+  if (!Array.isArray(value)) return [];
+  const out: Song[] = [];
+  for (const item of value) {
+    if (!item || typeof item !== "object") continue;
+    const raw = item as Record<string, unknown>;
+    const title = typeof raw.title === "string" ? raw.title.trim() : "";
+    if (!title) continue;
+    const url =
+      typeof raw.youtube_url === "string" && raw.youtube_url.trim()
+        ? raw.youtube_url.trim()
+        : null;
+    out.push({ title, youtube_url: url });
+  }
+  return out;
+}
+
 export interface Artist {
   id: string;
   name_ko: string;
@@ -7,6 +29,7 @@ export interface Artist {
   instagram_url: string | null;
   youtube_url: string | null;
   x_url: string | null;
+  hit_songs: unknown;
   created_at: string;
 }
 
@@ -23,6 +46,7 @@ export interface Performance {
   price_info: string | null;
   status: string;
   image_url: string | null;
+  setlist: unknown;
   created_at: string;
   updated_at: string;
   artist?: Artist | null;

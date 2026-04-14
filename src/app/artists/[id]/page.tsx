@@ -1,5 +1,7 @@
 import { PerformanceCard } from "@/components/performance/PerformanceCard";
+import { SongList } from "@/components/SongList";
 import { createServerClient } from "@/lib/supabase/server";
+import { normalizeSongs } from "@/types";
 import Link from "next/link";
 
 async function getArtistWithPerformances(id: string) {
@@ -110,6 +112,8 @@ export default async function ArtistDetailPage({
           </p>
         </div>
       </div>
+
+      <SongList songs={normalizeSongs(artist.hit_songs)} title="대표곡" />
 
       <h2 className="text-xl font-bold text-[#131b2e] mb-4">공연 일정</h2>
       {performances.length === 0 ? (

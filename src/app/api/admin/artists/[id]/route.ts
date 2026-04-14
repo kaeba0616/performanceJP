@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import type { Json } from "@/lib/supabase/types";
+import { normalizeSongs } from "@/types";
 
 function verifyAdmin(request: Request): boolean {
   const authHeader = request.headers.get("authorization");
@@ -16,13 +18,44 @@ export async function PUT(
 
   const { id } = await params;
   const body = await request.json();
-  const { name_ko, name_ja, name_en, image_url, instagram_url, youtube_url, x_url } = body;
+  const {
+    name_ko,
+    name_ja,
+    name_en,
+    image_url,
+    instagram_url,
+    youtube_url,
+    x_url,
+    hit_songs,
+  } = body;
+
+  const cleanedSongs =
+    hit_songs === null || hit_songs === undefined
+      ? hit_songs ?? undefined
+      : normalizeSongs(hit_songs);
+  const hitSongsValue =
+    cleanedSongs === undefined
+      ? undefined
+      : Array.isArray(cleanedSongs) && cleanedSongs.length === 0
+        ? null
+        : cleanedSongs;
 
   const supabase = createServerClient();
 
   const { data, error } = await supabase
     .from("artists")
-    .update({ name_ko, name_ja, name_en, image_url, instagram_url, youtube_url, x_url })
+    .update({
+      name_ko,
+      name_ja,
+      name_en,
+      image_url,
+      instagram_url,
+      youtube_url,
+      x_url,
+      ...(hitSongsValue !== undefined
+        ? { hit_songs: hitSongsValue as Json | null }
+        : {}),
+    })
     .eq("id", id)
     .select()
     .single();
