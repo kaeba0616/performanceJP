@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Info, BellRing } from "lucide-react";
 
 interface TimeUnits {
   days: number;
@@ -39,11 +40,13 @@ export function TicketCountdown({ ticketOpenAt }: { ticketOpenAt: string }) {
 
   if (opened) {
     return (
-      <div className="bg-white border border-[rgba(194,198,214,0.15)] rounded-lg shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] p-8 text-center">
-        <p className="text-sm font-bold text-[#424754] uppercase tracking-[1.4px] mb-4">
-          티켓 오픈까지
+      <div className="bg-surface-container-lowest rounded-3xl p-8 text-center">
+        <p className="text-xs font-black text-on-surface-variant uppercase tracking-widest mb-3">
+          Ticket Open
         </p>
-        <p className="text-3xl font-extrabold text-[#00714d]">오픈됨</p>
+        <p className="editorial-title text-4xl font-black text-secondary">
+          오픈됨
+        </p>
       </div>
     );
   }
@@ -58,33 +61,35 @@ export function TicketCountdown({ ticketOpenAt }: { ticketOpenAt: string }) {
   ];
 
   return (
-    <div className="bg-white border border-[rgba(194,198,214,0.15)] rounded-lg shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] p-8">
-      <p className="text-sm font-bold text-[#424754] uppercase tracking-[1.4px] text-center mb-6">
+    <div className="bg-surface-container-lowest rounded-3xl p-6 md:p-8">
+      <p className="text-xs font-black text-on-surface-variant uppercase tracking-widest text-center mb-6">
         티켓 오픈까지
       </p>
       <div className="grid grid-cols-4 gap-2 mb-6">
         {units.map((u) => (
           <div key={u.label} className="flex flex-col items-center">
-            <span className="text-4xl font-extrabold text-[#0058be] tabular-nums leading-tight">
+            <span className="editorial-title text-3xl md:text-4xl font-black text-primary tabular-nums leading-tight">
               {String(u.value).padStart(2, "0")}
             </span>
-            <span className="text-[10px] font-semibold text-[#c2c6d6] uppercase tracking-[-0.5px]">
+            <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mt-1">
               {u.label}
             </span>
           </div>
         ))}
       </div>
-      <div className="bg-[rgba(0,88,190,0.05)] rounded p-4 flex gap-3 items-start mb-6">
-        <svg className="w-5 h-5 text-[#0058be] shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-        </svg>
-        <p className="text-xs text-[#424754] leading-[18px]">
-          브라우저 알림 설정을 켜두시면 티켓 오픈 15분 전에 푸시 알림을 보내드립니다.
+      <div className="bg-primary-fixed/60 rounded-2xl p-4 flex gap-3 items-start mb-6">
+        <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+        <p className="text-xs text-on-primary-fixed-variant leading-5 font-medium">
+          티켓 오픈 15분 전 알림을 받으려면 구독 페이지에서 이메일을 등록하세요.
         </p>
       </div>
-      <button className="w-full py-4 rounded-md text-white font-bold text-base text-center bg-gradient-to-br from-[#0058be] to-[#2170e4] shadow-[0px_10px_15px_-3px_rgba(0,88,190,0.2),0px_4px_6px_-4px_rgba(0,88,190,0.2)] hover:brightness-110 transition-all">
+      <a
+        href="/subscribe"
+        className="w-full py-4 rounded-xl text-on-primary font-black text-sm text-center bg-gradient-to-br from-primary to-primary-container hover:brightness-110 transition-all flex items-center justify-center gap-2"
+      >
+        <BellRing className="w-4 h-4" />
         알림 신청하기
-      </button>
+      </a>
     </div>
   );
 }

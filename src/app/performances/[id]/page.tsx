@@ -1,10 +1,11 @@
+import Link from "next/link";
+import { ChevronRight, MapPin, CalendarDays, Ticket, Wallet, ArrowRight } from "lucide-react";
 import { TicketCountdown } from "@/components/performance/TicketCountdown";
 import { SourceLinks } from "@/components/performance/SourceLinks";
 import { SongList } from "@/components/SongList";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatDateTime } from "@/lib/utils/date";
 import { normalizeSongs, type PerformanceWithDetails } from "@/types";
-import Link from "next/link";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   upcoming: { label: "UPCOMING", className: "status-upcoming" },
@@ -38,144 +39,184 @@ export default async function PerformanceDetailPage({
   if (!performance) {
     return (
       <div className="mx-auto max-w-4xl px-6 py-24 text-center">
-        <h1 className="text-2xl font-bold text-[#131b2e]">
+        <h1 className="editorial-title text-3xl font-black text-on-surface">
           공연을 찾을 수 없습니다
         </h1>
-        <Link href="/" className="text-[#0058be] mt-4 inline-block">
+        <Link
+          href="/"
+          className="text-primary font-bold mt-4 inline-block hover:underline"
+        >
           홈으로 돌아가기
         </Link>
       </div>
     );
   }
 
-  const status =
-    statusConfig[performance.status] || statusConfig.upcoming;
+  const status = statusConfig[performance.status] || statusConfig.upcoming;
+  const image = performance.image_url || performance.artist?.image_url || null;
+  const setlistSongs = normalizeSongs(performance.setlist);
 
   return (
-    <div className="mx-auto max-w-[1280px] px-6 pt-24 pb-20">
+    <div className="mx-auto max-w-7xl px-6 pt-8 pb-20">
       {/* Breadcrumbs */}
-      <div className="flex items-center gap-2 text-sm mb-8">
-        <Link
-          href="/"
-          className="font-medium text-[#424754] hover:text-[#131b2e]"
-        >
+      <nav className="flex items-center gap-1.5 text-xs mb-8 text-on-surface-variant font-medium">
+        <Link href="/" className="hover:text-primary transition-colors">
           홈
         </Link>
-        <span className="text-[#c2c6d6]">&rsaquo;</span>
-        <Link
-          href="/"
-          className="font-medium text-[#424754] hover:text-[#131b2e]"
-        >
-          콘서트
+        <ChevronRight className="w-3 h-3" />
+        <Link href="/calendar" className="hover:text-primary transition-colors">
+          공연
         </Link>
-        <span className="text-[#c2c6d6]">&rsaquo;</span>
-        <span className="font-medium text-[#131b2e] truncate max-w-xs">
+        <ChevronRight className="w-3 h-3" />
+        <span className="text-on-surface font-bold truncate max-w-xs">
           {performance.title}
         </span>
-      </div>
+      </nav>
 
-      <div className="flex gap-12 items-start">
-        {/* Left Column (2/3) */}
-        <div className="flex-1 min-w-0 space-y-10">
-          {/* Header */}
-          <div>
+      <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-8 lg:gap-12 items-start">
+        {/* Left Column */}
+        <div className="min-w-0 space-y-8">
+          {/* Hero Image */}
+          <div className="relative aspect-[16/10] rounded-3xl overflow-hidden bg-surface-container-high">
+            {image ? (
+              <img
+                src={image}
+                alt={performance.title}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary-container to-primary-fixed-dim flex items-center justify-center">
+                <span className="editorial-title text-5xl md:text-7xl font-black italic text-on-primary/30 tracking-tighter">
+                  THE PULSE
+                </span>
+              </div>
+            )}
             <span
-              className={`${status.className} text-xs font-semibold uppercase tracking-[0.6px] px-3 py-1 rounded-xl inline-block mb-4`}
+              className={`${status.className} absolute top-6 left-6 px-4 py-1.5 rounded-full text-xs font-black tracking-widest uppercase`}
             >
               {status.label}
             </span>
-            <h1 className="text-5xl font-extrabold text-[#131b2e] tracking-[-2.4px] leading-[48px] mb-4">
+          </div>
+
+          {/* Header */}
+          <div>
+            <h1 className="editorial-title text-4xl md:text-5xl font-black text-on-surface leading-tight mb-3">
               {performance.title}
             </h1>
             {performance.artist && (
               <Link
                 href={`/artists/${performance.artist.id}`}
-                className="text-base font-semibold text-[#0058be] hover:underline inline-flex items-center gap-1"
+                className="inline-flex items-center gap-1.5 text-base font-bold text-primary hover:underline"
               >
                 {performance.artist.name_en || performance.artist.name_ko}
                 {performance.artist.name_ko &&
                   performance.artist.name_en &&
-                  ` (${performance.artist.name_ko})`}
-                <svg
-                  className="w-3 h-3"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
+                  ` · ${performance.artist.name_ko}`}
+                <ArrowRight className="w-4 h-4" />
               </Link>
             )}
           </div>
 
           {/* Info Grid */}
-          <div className="bg-[#f2f3ff] rounded-lg p-8 grid grid-cols-2 gap-8">
-            <div>
-              <p className="text-xs font-semibold text-[#727785] uppercase tracking-[1.2px] mb-1">
-                CONCERT DATE
-              </p>
-              <p className="text-lg font-semibold text-[#131b2e]">
-                {formatDate(performance.start_date)}
-                {performance.end_date
-                  ? ` ~ ${formatDate(performance.end_date)}`
-                  : ""}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-[#727785] uppercase tracking-[1.2px] mb-1">
-                VENUE
-              </p>
-              <p className="text-lg font-semibold text-[#131b2e]">
-                {performance.venue || "-"}
-                {performance.city ? `, ${performance.city}` : ""}
-              </p>
-            </div>
+          <div className="bg-surface-container-low rounded-3xl p-6 md:p-8 grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
+            <InfoItem
+              icon={<CalendarDays className="w-4 h-4" />}
+              label="Concert Date"
+            >
+              {formatDate(performance.start_date)}
+              {performance.end_date
+                ? ` ~ ${formatDate(performance.end_date)}`
+                : ""}
+            </InfoItem>
+            <InfoItem icon={<MapPin className="w-4 h-4" />} label="Venue">
+              {performance.venue || "-"}
+              {performance.city ? `, ${performance.city}` : ""}
+            </InfoItem>
             {performance.ticket_open_at && (
-              <div>
-                <p className="text-xs font-semibold text-[#727785] uppercase tracking-[1.2px] mb-1">
-                  TICKET OPEN
-                </p>
-                <p className="text-lg font-semibold text-[#131b2e]">
-                  {formatDateTime(performance.ticket_open_at)}
-                </p>
-              </div>
+              <InfoItem
+                icon={<Ticket className="w-4 h-4" />}
+                label="Ticket Open"
+              >
+                {formatDateTime(performance.ticket_open_at)}
+              </InfoItem>
             )}
             {performance.price_info && (
-              <div>
-                <p className="text-xs font-semibold text-[#727785] uppercase tracking-[1.2px] mb-1">
-                  PRICE
-                </p>
-                <p className="text-lg font-semibold text-[#131b2e]">
-                  {performance.price_info}
-                </p>
-              </div>
+              <InfoItem
+                icon={<Wallet className="w-4 h-4" />}
+                label="Price"
+              >
+                {performance.price_info}
+              </InfoItem>
             )}
           </div>
 
           {/* Ticket Buttons */}
-          <SourceLinks
-            listings={performance.source_listings}
-            size="large"
-          />
+          <SourceLinks listings={performance.source_listings} size="large" />
 
-          <SongList
-            songs={normalizeSongs(performance.setlist)}
-            title="셋리스트"
-          />
+          {/* Setlist */}
+          <SongList songs={setlistSongs} title="셋리스트" />
         </div>
 
-        {/* Right Column (1/3) */}
-        <div className="w-[395px] shrink-0 space-y-8 hidden lg:block">
+        {/* Right Column */}
+        <div className="lg:sticky lg:top-24 space-y-6">
           {performance.ticket_open_at && (
             <TicketCountdown ticketOpenAt={performance.ticket_open_at} />
           )}
+
+          {performance.artist && (
+            <Link
+              href={`/artists/${performance.artist.id}`}
+              className="block bg-surface-container-lowest rounded-3xl p-6 hover:bg-primary-fixed group transition-colors"
+            >
+              <p className="text-xs font-black text-on-surface-variant uppercase tracking-widest mb-4">
+                Artist
+              </p>
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-full bg-primary-fixed group-hover:bg-on-primary flex items-center justify-center text-xl font-black text-primary shrink-0 overflow-hidden">
+                  {performance.artist.image_url ? (
+                    <img
+                      src={performance.artist.image_url}
+                      alt={performance.artist.name_ko}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    performance.artist.name_ko[0]
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="editorial-title-sm font-black text-on-surface group-hover:text-on-primary-fixed-variant truncate">
+                    {performance.artist.name_en || performance.artist.name_ko}
+                  </p>
+                  <p className="text-sm text-on-surface-variant truncate">
+                    {performance.artist.name_ko}
+                  </p>
+                </div>
+                <ArrowRight className="w-5 h-5 text-on-surface-variant group-hover:text-on-primary-fixed-variant shrink-0" />
+              </div>
+            </Link>
+          )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function InfoItem({
+  icon,
+  label,
+  children,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <div className="flex items-center gap-1.5 text-xs font-black text-on-surface-variant uppercase tracking-widest mb-2">
+        {icon}
+        {label}
+      </div>
+      <p className="text-lg font-black text-on-surface">{children}</p>
     </div>
   );
 }

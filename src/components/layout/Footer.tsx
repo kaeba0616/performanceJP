@@ -2,36 +2,34 @@ import Link from "next/link";
 
 export function Footer() {
   return (
-    <footer className="bg-[#f8fafc] border-t border-[#e2e8f0]">
-      <div className="mx-auto max-w-[1280px] flex flex-col items-center gap-8 md:flex-row md:items-center md:justify-between px-6 md:px-8 py-12">
-        <div className="flex flex-col items-center md:items-start gap-2 text-center md:text-left">
-          <span className="font-bold text-base text-[#1e293b]">
-            내한공연 트래커
-          </span>
-          <span className="text-sm text-[#64748b]">
-            &copy; {new Date().getFullYear()} 내한공연 트래커. All rights
-            reserved.
-          </span>
+    <footer className="bg-surface-container-highest mt-24 pb-20 md:pb-0">
+      <div className="mx-auto max-w-7xl flex flex-col md:flex-row justify-between items-center gap-8 px-8 md:px-12 py-14 text-sm uppercase tracking-widest">
+        <div className="text-lg font-black text-on-surface tracking-tight">
+          THE EDITORIAL PULSE
         </div>
-        <div className="flex flex-wrap justify-center md:justify-end gap-x-6 gap-y-2 md:gap-8">
+        <div className="flex flex-wrap justify-center gap-6 md:gap-8">
           <Link
             href="#"
-            className="text-sm text-[#64748b] hover:text-[#1e293b] transition-colors whitespace-nowrap"
+            className="text-on-surface-variant/80 hover:text-on-surface transition-all text-xs"
           >
-            이용약관
+            Terms
           </Link>
           <Link
             href="#"
-            className="text-sm text-[#64748b] hover:text-[#1e293b] transition-colors whitespace-nowrap"
+            className="text-on-surface-variant/80 hover:text-on-surface transition-all text-xs"
           >
-            개인정보처리방침
+            Privacy
           </Link>
           <Link
             href="#"
-            className="text-sm text-[#64748b] hover:text-[#1e293b] transition-colors whitespace-nowrap"
+            className="text-on-surface-variant/80 hover:text-on-surface transition-all text-xs"
           >
-            문의하기
+            Contact
           </Link>
+        </div>
+        <div className="text-[10px] text-on-surface-variant/70 text-center md:text-right normal-case tracking-normal">
+          © {new Date().getFullYear()} The Editorial Pulse. <br className="md:hidden" />
+          Curating J-Rock & J-Pop culture in Korea.
         </div>
       </div>
     </footer>

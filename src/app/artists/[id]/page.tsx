@@ -1,8 +1,9 @@
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { PerformanceCard } from "@/components/performance/PerformanceCard";
 import { SongList } from "@/components/SongList";
 import { createServerClient } from "@/lib/supabase/server";
 import { normalizeSongs } from "@/types";
-import Link from "next/link";
 
 async function getArtistWithPerformances(id: string) {
   const supabase = createServerClient();
@@ -17,7 +18,7 @@ async function getArtistWithPerformances(id: string) {
 
   const { data: performances } = await supabase
     .from("performances")
-    .select("*")
+    .select("*, artist:artists(*)")
     .eq("artist_id", id)
     .order("start_date", { ascending: true });
 
@@ -35,8 +36,13 @@ export default async function ArtistDetailPage({
   if (!data) {
     return (
       <div className="mx-auto max-w-4xl px-6 py-24 text-center">
-        <h1 className="text-2xl font-bold text-[#131b2e]">아티스트를 찾을 수 없습니다</h1>
-        <Link href="/artists" className="text-[#0058be] mt-4 inline-block">
+        <h1 className="editorial-title text-3xl font-black text-on-surface">
+          아티스트를 찾을 수 없습니다
+        </h1>
+        <Link
+          href="/artists"
+          className="text-primary font-bold mt-4 inline-block hover:underline"
+        >
           아티스트 목록으로 돌아가기
         </Link>
       </div>
@@ -44,32 +50,59 @@ export default async function ArtistDetailPage({
   }
 
   const { artist, performances } = data;
+  const hitSongs = normalizeSongs(artist.hit_songs);
+  const upcoming = performances.filter(
+    (p) => p.status !== "completed"
+  );
+  const past = performances.filter((p) => p.status === "completed");
 
   return (
-    <div className="mx-auto max-w-[1280px] px-6 pt-24 pb-36">
+    <div className="mx-auto max-w-7xl px-6 pt-8 pb-24">
       <Link
         href="/artists"
-        className="text-sm text-[#424754] hover:text-[#131b2e] mb-6 inline-block"
+        className="inline-flex items-center gap-1.5 text-xs font-bold text-on-surface-variant hover:text-primary mb-8 transition-colors uppercase tracking-widest"
       >
-        &larr; 아티스트 목록
+        <ArrowLeft className="w-4 h-4" />
+        아티스트 목록
       </Link>
 
-      <div className="flex items-center gap-5 mb-10">
-        <div className="w-20 h-20 rounded-xl bg-[#d8e2ff] flex items-center justify-center text-3xl font-bold text-[#0058be] shadow-[inset_0px_2px_4px_0px_rgba(0,0,0,0.05)]">
-          {artist.name_ko[0]}
+      {/* Hero */}
+      <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-8 md:gap-12 mb-16 items-center">
+        <div className="relative aspect-square w-full max-w-[240px] md:max-w-none rounded-3xl overflow-hidden bg-surface-container-high mx-auto md:mx-0">
+          {artist.image_url ? (
+            <img
+              src={artist.image_url}
+              alt={artist.name_ko}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary-container to-primary-fixed-dim flex items-center justify-center">
+              <span className="editorial-title text-8xl font-black italic text-on-primary/50 tracking-tighter">
+                {artist.name_ko[0]}
+              </span>
+            </div>
+          )}
         </div>
         <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-extrabold text-[#131b2e] tracking-[-1px]">
-              {artist.name_en || artist.name_ko}
-            </h1>
-            {/* SNS Links */}
+          <p className="text-xs font-black text-primary uppercase tracking-widest mb-3">
+            J-Pop / J-Rock Artist
+          </p>
+          <h1 className="editorial-title text-5xl md:text-6xl font-black text-on-surface mb-3 leading-[0.95]">
+            {artist.name_en || artist.name_ko}
+          </h1>
+          <p className="text-lg text-on-surface-variant font-medium mb-6">
+            {artist.name_ko}
+            {artist.name_ja && artist.name_ja !== artist.name_en
+              ? ` · ${artist.name_ja}`
+              : ""}
+          </p>
+          <div className="flex flex-wrap items-center gap-3">
             {artist.instagram_url && (
               <a
                 href={artist.instagram_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#f09433] via-[#dc2743] to-[#bc1888] flex items-center justify-center hover:opacity-80 transition-opacity"
+                className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#f09433] via-[#dc2743] to-[#bc1888] flex items-center justify-center hover:scale-105 transition-transform"
                 title="Instagram"
               >
                 <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -82,7 +115,7 @@ export default async function ArtistDetailPage({
                 href={artist.youtube_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-lg bg-[#FF0000] flex items-center justify-center hover:opacity-80 transition-opacity"
+                className="w-10 h-10 rounded-xl bg-[#FF0000] flex items-center justify-center hover:scale-105 transition-transform"
                 title="YouTube"
               >
                 <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -95,34 +128,65 @@ export default async function ArtistDetailPage({
                 href={artist.x_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-lg bg-[#000000] flex items-center justify-center hover:opacity-80 transition-opacity"
+                className="w-10 h-10 rounded-xl bg-black flex items-center justify-center hover:scale-105 transition-transform"
                 title="X (Twitter)"
               >
-                <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-4 h-4 text-white"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                 </svg>
               </a>
             )}
+            {hitSongs.length > 0 && (
+              <span className="bg-primary-fixed text-on-primary-fixed-variant px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-widest">
+                대표곡 {hitSongs.length}곡
+              </span>
+            )}
           </div>
-          <p className="text-base text-[#424754] mt-1">
-            {artist.name_ko}
-            {artist.name_ja && artist.name_ja !== artist.name_en
-              ? ` / ${artist.name_ja}`
-              : ""}
-          </p>
         </div>
       </div>
 
-      <SongList songs={normalizeSongs(artist.hit_songs)} title="대표곡" />
+      {/* Hit Songs */}
+      {hitSongs.length > 0 && (
+        <div className="mb-16">
+          <SongList songs={hitSongs} title="대표곡" />
+        </div>
+      )}
 
-      <h2 className="text-xl font-bold text-[#131b2e] mb-4">공연 일정</h2>
-      {performances.length === 0 ? (
-        <p className="text-[#424754]">예정된 공연이 없습니다.</p>
-      ) : (
-        <div className="space-y-3">
-          {performances.map((p) => (
-            <PerformanceCard key={p.id} performance={p} />
-          ))}
+      {/* Upcoming performances */}
+      {upcoming.length > 0 && (
+        <section className="mb-16">
+          <h2 className="editorial-title text-3xl md:text-4xl font-black text-on-surface mb-8">
+            🎤 공연 일정
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+            {upcoming.map((p) => (
+              <PerformanceCard key={p.id} performance={p} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Past performances */}
+      {past.length > 0 && (
+        <section>
+          <h2 className="editorial-title text-3xl md:text-4xl font-black text-on-surface mb-8">
+            📼 지난 공연
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+            {past.map((p) => (
+              <PerformanceCard key={p.id} performance={p} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {performances.length === 0 && (
+        <div className="bg-surface-container-low rounded-3xl py-16 text-center">
+          <p className="text-on-surface-variant">예정된 공연이 없습니다.</p>
         </div>
       )}
     </div>

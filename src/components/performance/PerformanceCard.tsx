@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { formatDate } from "@/lib/utils/date";
+import { MapPin } from "lucide-react";
+import { formatDate, getDDay } from "@/lib/utils/date";
 import { normalizeSongs, type Performance } from "@/types";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
@@ -9,68 +10,94 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   completed: { label: "종료", className: "status-completed" },
 };
 
+function pickFirstPrice(raw: string | null): string | null {
+  if (!raw) return null;
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const first = trimmed.split("/")[0]?.trim() ?? trimmed;
+  return first.length > 24 ? `${first.slice(0, 22)}…` : first;
+}
+
 export function PerformanceCard({
   performance,
 }: {
   performance: Performance;
 }) {
   const status = statusConfig[performance.status] || statusConfig.upcoming;
-  const isSoldOut = performance.status === "sold_out" || performance.status === "completed";
+  const isSoldOut =
+    performance.status === "sold_out" || performance.status === "completed";
   const setlistCount = normalizeSongs(performance.setlist).length;
+  const image = performance.image_url || performance.artist?.image_url || null;
+  const dday = !isSoldOut ? getDDay(performance.start_date) : null;
+  const price = pickFirstPrice(performance.price_info);
 
   return (
-    <Link href={`/performances/${performance.id}`}>
-      <div
-        className={`bg-white rounded-lg p-6 hover:shadow-md transition-shadow relative ${
-          isSoldOut ? "opacity-80" : ""
-        }`}
-      >
-        <div className="flex items-start justify-between mb-4">
+    <Link
+      href={`/performances/${performance.id}`}
+      className="group relative flex flex-col bg-surface-container-low rounded-2xl overflow-hidden hover:shadow-[0_10px_40px_rgba(26,27,32,0.05)] transition-all duration-300"
+    >
+      <div className="relative aspect-[4/5] overflow-hidden bg-surface-container">
+        {image ? (
+          <img
+            src={image}
+            alt={performance.title}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary-fixed to-surface-container-high flex items-center justify-center">
+            <span className="text-4xl font-black italic text-primary/40 tracking-tighter">
+              THE PULSE
+            </span>
+          </div>
+        )}
+        <div className="absolute top-4 left-4 flex flex-col gap-2">
           <span
-            className={`${status.className} text-xs font-bold uppercase tracking-[1.2px] px-3 py-1 rounded-xl`}
+            className={`${status.className} px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase`}
           >
             {status.label}
           </span>
-          <span className={`text-sm font-bold ${isSoldOut ? "text-[#424754]" : "text-[#0058be]"}`}>
+          {dday && (
+            <span className="bg-primary text-on-primary px-3 py-1.5 rounded-lg text-xl font-black shadow-lg w-fit">
+              {dday}
+            </span>
+          )}
+        </div>
+        {setlistCount > 0 && (
+          <span className="absolute top-4 right-4 bg-primary-fixed text-on-primary-fixed-variant px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
+            Setlist {setlistCount}
+          </span>
+        )}
+      </div>
+
+      <div className="p-6 flex flex-col flex-grow">
+        <h3
+          className={`editorial-title-sm text-xl md:text-2xl font-black mb-2 line-clamp-2 transition-colors ${
+            isSoldOut
+              ? "text-on-surface-variant"
+              : "text-on-surface group-hover:text-primary"
+          }`}
+        >
+          {performance.title}
+        </h3>
+        {performance.venue && (
+          <p className="flex items-center gap-1.5 text-sm text-on-surface-variant mb-4">
+            <MapPin className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">{performance.venue}</span>
+          </p>
+        )}
+        <div className="mt-auto pt-4 flex justify-between items-center">
+          <span className="text-sm font-bold text-primary">
             {formatDate(performance.start_date)}
           </span>
-        </div>
-
-        <h4 className={`text-xl font-bold mb-2 line-clamp-2 ${isSoldOut ? "text-[#424754]" : "text-[#131b2e]"}`}>
-          {performance.title}
-        </h4>
-
-        {performance.venue && (
-          <div className="flex items-center gap-2 mb-4 flex-wrap">
-            <div className="flex items-center gap-1">
-              <svg className="w-[10px] h-[12px] text-[#424754] shrink-0" fill="currentColor" viewBox="0 0 10 12">
-                <path d="M5 0C2.24 0 0 2.24 0 5c0 3.5 5 7 5 7s5-3.5 5-7c0-2.76-2.24-5-5-5zm0 6.75c-.97 0-1.75-.78-1.75-1.75S4.03 3.25 5 3.25 6.75 4.03 6.75 5 5.97 6.75 5 6.75z" />
-              </svg>
-              <span className="text-sm text-[#424754]">{performance.venue}</span>
-            </div>
-            {setlistCount > 0 && (
-              <span className="inline-flex items-center bg-[#f2f3ff] text-[#0058be] text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap">
-                셋리스트 {setlistCount}곡
-              </span>
-            )}
-          </div>
-        )}
-
-        <div className="border-t border-[rgba(194,198,214,0.15)] pt-4 flex items-center justify-between">
-          <div>
-            {performance.price_info && (
-              <>
-                <p className="text-sm text-[#424754]">
-                  {performance.price_info.split("/")[0]?.split("원")[0] ? "가격 정보" : ""}
-                </p>
-                <p className={`text-lg font-semibold ${isSoldOut ? "text-[#424754]" : "text-[#131b2e]"}`}>
-                  {performance.price_info.length > 20
-                    ? performance.price_info.split("/")[0].trim()
-                    : performance.price_info}
-                </p>
-              </>
-            )}
-          </div>
+          {price && (
+            <span
+              className={`text-sm font-black ${
+                isSoldOut ? "text-on-surface-variant" : "text-on-surface"
+              }`}
+            >
+              {price}
+            </span>
+          )}
         </div>
       </div>
     </Link>

@@ -1,19 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarCell } from "./CalendarCell";
-import { Button } from "@/components/ui/button";
-import { getDaysInMonth, getFirstDayOfMonth, getMonthName, formatDate } from "@/lib/utils/date";
-import { PerformanceChip } from "./PerformanceChip";
-import { normalizeSongs, type Performance } from "@/types";
 import Link from "next/link";
+import { ChevronLeft, ChevronRight, MapPin, X, ArrowRight } from "lucide-react";
+import { CalendarCell } from "./CalendarCell";
+import {
+  getDaysInMonth,
+  getFirstDayOfMonth,
+  getMonthName,
+  formatDate,
+} from "@/lib/utils/date";
+import { normalizeSongs, type Performance } from "@/types";
 
 function SetlistBadge({ setlist }: { setlist: unknown }) {
   const count = normalizeSongs(setlist).length;
   if (count === 0) return null;
   return (
-    <span className="inline-flex items-center bg-[#f2f3ff] text-[#0058be] text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap">
-      셋리스트 {count}곡
+    <span className="inline-flex items-center bg-primary-fixed text-on-primary-fixed-variant text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap uppercase tracking-wider">
+      Setlist {count}
     </span>
   );
 }
@@ -35,14 +39,18 @@ export function CalendarGrid({ performances }: CalendarGridProps) {
 
   const goToPrevMonth = () => {
     setSelectedDay(null);
-    if (month === 0) { setYear(year - 1); setMonth(11); }
-    else setMonth(month - 1);
+    if (month === 0) {
+      setYear(year - 1);
+      setMonth(11);
+    } else setMonth(month - 1);
   };
 
   const goToNextMonth = () => {
     setSelectedDay(null);
-    if (month === 11) { setYear(year + 1); setMonth(0); }
-    else setMonth(month + 1);
+    if (month === 11) {
+      setYear(year + 1);
+      setMonth(0);
+    } else setMonth(month + 1);
   };
 
   const goToToday = () => {
@@ -51,7 +59,6 @@ export function CalendarGrid({ performances }: CalendarGridProps) {
     setMonth(today.getMonth());
   };
 
-  // Group performances by date
   const perfByDate = new Map<number, Performance[]>();
   performances.forEach((p) => {
     const startDate = new Date(p.start_date);
@@ -87,30 +94,46 @@ export function CalendarGrid({ performances }: CalendarGridProps) {
 
   return (
     <div>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <h2 className="text-2xl font-bold text-[#131b2e]">
+          <h2 className="editorial-title-sm text-2xl md:text-3xl font-black text-on-surface">
             {year}년 {getMonthName(month)}
           </h2>
-          <Button variant="outline" size="sm" onClick={goToToday} className="text-xs">
+          <button
+            onClick={goToToday}
+            className="bg-surface-container-low text-on-surface-variant hover:bg-primary-fixed hover:text-on-primary-fixed-variant text-xs font-bold px-3 py-1.5 rounded-full transition-colors"
+          >
             오늘
-          </Button>
+          </button>
         </div>
         <div className="flex gap-1">
-          <Button variant="outline" size="sm" onClick={goToPrevMonth}>&lt;</Button>
-          <Button variant="outline" size="sm" onClick={goToNextMonth}>&gt;</Button>
+          <button
+            onClick={goToPrevMonth}
+            className="w-9 h-9 rounded-full bg-surface-container-low hover:bg-primary-fixed text-on-surface-variant flex items-center justify-center transition-colors"
+            aria-label="이전 달"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <button
+            onClick={goToNextMonth}
+            className="w-9 h-9 rounded-full bg-surface-container-low hover:bg-primary-fixed text-on-surface-variant flex items-center justify-center transition-colors"
+            aria-label="다음 달"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
       {/* Desktop: Calendar grid */}
-      <div className="hidden md:block">
-        <div className="grid grid-cols-7 text-center text-sm font-medium text-[#727785] mb-1">
+      <div className="hidden md:block bg-surface-container-low rounded-3xl p-4">
+        <div className="grid grid-cols-7 text-center text-xs font-black text-on-surface-variant uppercase tracking-widest mb-2">
           {WEEKDAYS.map((day) => (
-            <div key={day} className="py-2">{day}</div>
+            <div key={day} className="py-2">
+              {day}
+            </div>
           ))}
         </div>
-        <div className="grid grid-cols-7 gap-0">
+        <div className="grid grid-cols-7 gap-1 rounded-2xl overflow-hidden">
           {cells.map((day, i) => (
             <CalendarCell
               key={i}
@@ -127,16 +150,17 @@ export function CalendarGrid({ performances }: CalendarGridProps) {
 
       {/* Desktop: Selected day detail panel */}
       {selectedDay && selectedPerfs.length > 0 && (
-        <div className="hidden md:block mt-6 bg-white rounded-lg p-6 animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-[#131b2e]">
+        <div className="hidden md:block mt-6 bg-surface-container-lowest rounded-3xl p-6 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="flex items-center justify-between mb-5">
+            <h3 className="editorial-title-sm text-xl font-black text-on-surface">
               {formatDate(selectedDateStr)} 공연 일정
             </h3>
             <button
               onClick={() => setSelectedDay(null)}
-              className="text-[#727785] hover:text-[#131b2e] text-sm"
+              className="w-8 h-8 rounded-full bg-surface-container-low hover:bg-surface-container-high text-on-surface-variant flex items-center justify-center transition-colors"
+              aria-label="닫기"
             >
-              닫기 &times;
+              <X className="w-4 h-4" />
             </button>
           </div>
           <div className="space-y-3">
@@ -144,26 +168,24 @@ export function CalendarGrid({ performances }: CalendarGridProps) {
               <Link
                 key={p.id}
                 href={`/performances/${p.id}`}
-                className="flex items-center justify-between p-4 rounded-lg border border-[rgba(194,198,214,0.15)] hover:bg-[#f2f3ff]/50 transition-colors"
+                className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-surface-container-low hover:bg-primary-fixed group transition-colors"
               >
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-[#131b2e] truncate">{p.title}</p>
-                  <div className="flex items-center gap-3 mt-1 text-sm text-[#424754]">
+                  <p className="font-black text-on-surface truncate group-hover:text-on-primary-fixed-variant">
+                    {p.title}
+                  </p>
+                  <div className="flex items-center gap-3 mt-1 text-sm text-on-surface-variant">
                     {p.artist?.name_ko && <span>{p.artist.name_ko}</span>}
                     {p.venue && (
                       <span className="flex items-center gap-1">
-                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 10 12">
-                          <path d="M5 0C2.24 0 0 2.24 0 5c0 3.5 5 7 5 7s5-3.5 5-7c0-2.76-2.24-5-5-5zm0 6.75c-.97 0-1.75-.78-1.75-1.75S4.03 3.25 5 3.25 6.75 4.03 6.75 5 5.97 6.75 5 6.75z" />
-                        </svg>
+                        <MapPin className="w-3 h-3" />
                         {p.venue}
                       </span>
                     )}
                     <SetlistBadge setlist={p.setlist} />
                   </div>
                 </div>
-                <svg className="w-5 h-5 text-[#727785] shrink-0 ml-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
+                <ArrowRight className="w-5 h-5 text-on-surface-variant shrink-0 group-hover:text-on-primary-fixed-variant transition-colors" />
               </Link>
             ))}
           </div>
@@ -171,28 +193,38 @@ export function CalendarGrid({ performances }: CalendarGridProps) {
       )}
 
       {/* Mobile: List view */}
-      <div className="md:hidden space-y-3">
+      <div className="md:hidden space-y-4">
         {daysWithPerfs.length === 0 ? (
-          <p className="text-sm text-[#424754] text-center py-8">
-            이번 달 예정된 공연이 없습니다.
-          </p>
+          <div className="bg-surface-container-low rounded-3xl py-14 text-center">
+            <p className="text-sm text-on-surface-variant">
+              이번 달 예정된 공연이 없습니다.
+            </p>
+          </div>
         ) : (
           daysWithPerfs.map(({ day, perfs }) => (
-            <div key={day} className="bg-white rounded-lg p-4">
-              <p className="text-sm font-bold text-[#0058be] mb-2">
-                {formatDate(`${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`)}
+            <div
+              key={day}
+              className="bg-surface-container-lowest rounded-2xl p-5"
+            >
+              <p className="text-xs font-black text-primary uppercase tracking-widest mb-3">
+                {formatDate(
+                  `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`
+                )}
               </p>
               <div className="space-y-2">
                 {perfs.map((p) => (
                   <Link
                     key={p.id}
                     href={`/performances/${p.id}`}
-                    className="block p-2 rounded hover:bg-[#f2f3ff]/50 transition-colors"
+                    className="block p-3 -mx-2 rounded-xl hover:bg-primary-fixed/50 transition-colors"
                   >
-                    <p className="font-bold text-sm text-[#131b2e] truncate">{p.title}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <p className="text-xs text-[#424754]">
-                        {p.artist?.name_ko}{p.venue ? ` · ${p.venue}` : ""}
+                    <p className="font-black text-sm text-on-surface truncate">
+                      {p.title}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <p className="text-xs text-on-surface-variant">
+                        {p.artist?.name_ko}
+                        {p.venue ? ` · ${p.venue}` : ""}
                       </p>
                       <SetlistBadge setlist={p.setlist} />
                     </div>

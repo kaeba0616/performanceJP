@@ -13,9 +13,16 @@ interface CalendarCellProps {
   onSelect?: (day: number) => void;
 }
 
-export function CalendarCell({ year, month, day, performances, isSelected, onSelect }: CalendarCellProps) {
+export function CalendarCell({
+  year,
+  month,
+  day,
+  performances,
+  isSelected,
+  onSelect,
+}: CalendarCellProps) {
   if (day === null) {
-    return <div className="min-h-[100px] bg-[#f2f3ff]/30" />;
+    return <div className="min-h-[110px] bg-surface-container-low/40" />;
   }
 
   const today = isToday(year, month, day);
@@ -24,28 +31,36 @@ export function CalendarCell({ year, month, day, performances, isSelected, onSel
   return (
     <div
       onClick={() => hasPerfs && onSelect?.(day)}
-      className={`min-h-[100px] border border-[rgba(194,198,214,0.15)] p-1.5 transition-colors ${
-        hasPerfs ? "cursor-pointer hover:bg-[#f2f3ff]/50" : ""
-      } ${isSelected ? "bg-[#f2f3ff] ring-2 ring-[#0058be]/30" : ""} ${
-        today && !isSelected ? "bg-[rgba(0,88,190,0.03)] ring-1 ring-[#0058be]/20" : ""
+      className={`min-h-[110px] p-2 transition-colors ${
+        hasPerfs
+          ? "cursor-pointer hover:bg-surface-container-low/70"
+          : "hover:bg-surface-container-low/40"
+      } ${
+        isSelected
+          ? "bg-primary-fixed ring-2 ring-primary-container"
+          : today && !isSelected
+          ? "bg-primary-fixed/50"
+          : "bg-surface-container-lowest"
       }`}
     >
       <span
-        className={`text-sm font-medium inline-flex items-center justify-center ${
+        className={`text-sm font-bold inline-flex items-center justify-center ${
           today
-            ? "bg-[#0058be] text-white rounded-full w-6 h-6"
-            : "text-[#727785]"
+            ? "bg-primary text-on-primary rounded-full w-6 h-6"
+            : isSelected
+            ? "text-on-primary-fixed-variant"
+            : "text-on-surface-variant"
         }`}
       >
         {day}
       </span>
-      <div className="mt-1 space-y-0.5">
+      <div className="mt-1.5 space-y-0.5">
         {performances.slice(0, 3).map((p) => (
           <PerformanceChip key={p.id} performance={p} />
         ))}
         {performances.length > 3 && (
-          <span className="text-[10px] text-[#727785] pl-1">
-            +{performances.length - 3}개 더
+          <span className="text-[10px] font-bold text-on-surface-variant pl-1.5">
+            +{performances.length - 3}
           </span>
         )}
       </div>

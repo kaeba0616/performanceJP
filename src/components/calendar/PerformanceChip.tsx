@@ -3,10 +3,18 @@
 import type { Performance } from "@/types";
 
 const statusConfig: Record<string, { className: string }> = {
-  upcoming: { className: "bg-[#2170e4] text-white" },
-  on_sale: { className: "bg-[#6cf8bb] text-[#00714d]" },
-  sold_out: { className: "bg-[#da3437] text-white" },
-  completed: { className: "bg-[#c2c6d6] text-white" },
+  upcoming: {
+    className: "bg-primary-fixed text-on-primary-fixed-variant",
+  },
+  on_sale: {
+    className: "bg-secondary-container text-on-secondary-container",
+  },
+  sold_out: {
+    className: "bg-tertiary-fixed text-on-tertiary-fixed-variant",
+  },
+  completed: {
+    className: "bg-surface-container-highest text-on-surface-variant",
+  },
 };
 
 export function PerformanceChip({
@@ -18,7 +26,7 @@ export function PerformanceChip({
 
   return (
     <span
-      className={`block text-[10px] font-bold truncate rounded-sm px-1.5 py-0.5 ${status.className}`}
+      className={`block text-[10px] font-black truncate rounded-md px-1.5 py-0.5 ${status.className}`}
       title={performance.title}
     >
       {performance.artist?.name_ko || performance.title}

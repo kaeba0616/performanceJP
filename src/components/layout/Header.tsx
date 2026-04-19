@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useState } from "react";
+import { Search, Menu, X, Bell } from "lucide-react";
 
 export function Header() {
   const router = useRouter();
@@ -20,9 +21,10 @@ export function Header() {
   }
 
   const navLinks = [
-    { href: "/", label: "캘린더" },
-    { href: "/artists", label: "아티스트" },
-    { href: "/subscribe", label: "알림 설정" },
+    { href: "/", label: "홈", en: "Home" },
+    { href: "/calendar", label: "캘린더", en: "Schedules" },
+    { href: "/artists", label: "아티스트", en: "Artists" },
+    { href: "/subscribe", label: "알림", en: "Alerts" },
   ];
 
   function isActive(href: string) {
@@ -31,24 +33,24 @@ export function Header() {
   }
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-[12px] bg-[rgba(250,248,255,0.7)] shadow-[0px_1px_2px_0px_rgba(30,58,138,0.05)]">
-      <div className="mx-auto max-w-[1280px] flex items-center justify-between px-6 py-3">
-        <div className="flex items-center gap-8">
+    <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-[rgba(250,248,255,0.8)]">
+      <div className="mx-auto max-w-7xl flex items-center justify-between px-6 py-4">
+        <div className="flex items-center gap-10">
           <Link
             href="/"
-            className="text-xl font-bold text-[#1e40af] tracking-[-1px]"
+            className="text-2xl font-black italic tracking-tighter text-primary whitespace-nowrap"
           >
-            내한공연 트래커
+            THE PULSE
           </Link>
-          <nav className="hidden md:flex items-center gap-6">
+          <nav className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 className={
                   isActive(link.href)
-                    ? "text-[#1d4ed8] font-bold text-base tracking-[-0.4px] border-b-2 border-[#2563eb] pb-0.5"
-                    : "text-[#475569] text-base tracking-[-0.4px] hover:text-[#1d4ed8] transition-colors"
+                    ? "text-primary font-bold text-sm tracking-tight transition-colors"
+                    : "text-on-surface-variant font-medium text-sm tracking-tight hover:text-primary transition-colors"
                 }
               >
                 {link.label}
@@ -58,75 +60,48 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Search - desktop */}
           <form onSubmit={handleSearch} className="relative hidden sm:block">
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-[14px] h-[14px] text-[#6b7280]"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant pointer-events-none" />
             <input
               type="search"
               placeholder="아티스트 검색..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="w-[256px] bg-[#f2f3ff] rounded pl-10 pr-4 py-1.5 text-sm tracking-[-0.4px] text-[#131b2e] placeholder:text-[#6b7280] focus:outline-none focus:ring-2 focus:ring-[#0058be]/30 transition-all"
+              className="w-[240px] bg-surface-container-low rounded-full pl-10 pr-4 py-2 text-sm tracking-tight text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
             />
           </form>
 
-          {/* Hamburger - mobile */}
+          <Link
+            href="/subscribe"
+            aria-label="알림 설정"
+            className="hidden sm:inline-flex p-2 text-on-surface-variant hover:text-primary transition-colors"
+          >
+            <Bell className="w-5 h-5" />
+          </Link>
+
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 text-[#475569] hover:text-[#131b2e]"
+            className="md:hidden p-2 text-on-surface-variant hover:text-on-surface"
             aria-label="메뉴"
           >
-            {mobileMenuOpen ? (
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            ) : (
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            )}
+            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
       </div>
 
-      {/* Mobile menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-[rgba(194,198,214,0.15)] bg-[rgba(250,248,255,0.95)] backdrop-blur-[12px] px-6 py-4 space-y-4">
+        <div className="md:hidden bg-[rgba(250,248,255,0.98)] backdrop-blur-xl px-6 py-5 space-y-5">
           <form onSubmit={handleSearch} className="relative sm:hidden">
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-[14px] h-[14px] text-[#6b7280]"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant pointer-events-none" />
             <input
               type="search"
               placeholder="아티스트 검색..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="w-full bg-[#f2f3ff] rounded pl-10 pr-4 py-2 text-sm text-[#131b2e] placeholder:text-[#6b7280] focus:outline-none focus:ring-2 focus:ring-[#0058be]/30"
+              className="w-full bg-surface-container-low rounded-full pl-10 pr-4 py-2.5 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
           </form>
-          <nav className="flex flex-col gap-3">
+          <nav className="flex flex-col gap-4">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -134,8 +109,8 @@ export function Header() {
                 onClick={() => setMobileMenuOpen(false)}
                 className={
                   isActive(link.href)
-                    ? "text-[#1d4ed8] font-bold text-base"
-                    : "text-[#475569] text-base hover:text-[#1d4ed8]"
+                    ? "text-primary font-bold text-base tracking-tight"
+                    : "text-on-surface-variant font-medium text-base tracking-tight hover:text-primary"
                 }
               >
                 {link.label}
