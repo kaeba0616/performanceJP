@@ -9,16 +9,16 @@ export function Footer() {
         </div>
         <div className="flex flex-wrap justify-center gap-6 md:gap-8">
           <Link
-            href="#"
+            href="/submit"
             className="text-on-surface-variant/80 hover:text-on-surface transition-all text-xs"
           >
-            Terms
+            Submit
           </Link>
           <Link
-            href="#"
+            href="/subscribe"
             className="text-on-surface-variant/80 hover:text-on-surface transition-all text-xs"
           >
-            Privacy
+            Alerts
           </Link>
           <Link
             href="#"

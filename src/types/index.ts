@@ -102,3 +102,35 @@ export interface PerformanceWithDetails extends Performance {
   artist: Artist | null;
   source_listings: SourceListing[];
 }
+
+export type SubmissionStatus = "pending" | "approved" | "rejected";
+
+export interface Submission {
+  id: string;
+  submitter_email: string;
+  submitter_name: string | null;
+  submitter_ip: string | null;
+  submitter_note: string | null;
+  artist_id: string | null;
+  proposed_artist_name_ko: string | null;
+  proposed_artist_name_ja: string | null;
+  proposed_artist_name_en: string | null;
+  title: string;
+  venue: string | null;
+  city: string | null;
+  start_date: string;
+  end_date: string | null;
+  ticket_open_at: string | null;
+  presale_open_at: string | null;
+  price_info: string | null;
+  image_url: string | null;
+  source_url: string | null;
+  status: SubmissionStatus;
+  admin_note: string | null;
+  rejection_reason: string | null;
+  approved_performance_id: string | null;
+  created_artist_id: string | null;
+  created_at: string;
+  reviewed_at: string | null;
+  artist?: Pick<Artist, "id" | "name_ko" | "name_en"> | null;
+}

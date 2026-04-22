@@ -1,6 +1,16 @@
 const SITE_NAME = '내한공연 트래커'
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
+export function escapeHtml(input: string | null | undefined): string {
+  if (input == null) return ''
+  return String(input)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 const baseStyles = `
   body { margin: 0; padding: 0; background-color: #f6f6f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
   .container { max-width: 560px; margin: 0 auto; padding: 32px 16px; }
@@ -110,6 +120,101 @@ export function verificationEmailHtml(params: {
     <p>아래 버튼을 클릭하여 이메일을 인증해주세요.</p>
     <a href="${params.verifyUrl}" class="btn">이메일 인증하기</a>
     <p style="font-size: 12px; color: #9ca3af;">본인이 요청하지 않은 경우 이 메일을 무시해주세요.</p>
+  `
+  return layout(content)
+}
+
+export function newSubmissionAdminAlertHtml(params: {
+  submissionId: string
+  submitterEmail: string
+  title: string
+  artistLabel: string
+  startDate: string
+  venue: string | null
+}) {
+  const reviewUrl = `${SITE_URL}/admin/submissions/${params.submissionId}`
+  const content = `
+    <h1>새 공연 제보가 도착했습니다</h1>
+    <p>검토가 필요한 사용자 제보가 접수되었습니다.</p>
+    <div class="highlight">
+      <p class="highlight-label">공연</p>
+      <p class="highlight-value">${escapeHtml(params.title)}</p>
+    </div>
+    <div class="highlight">
+      <p class="highlight-label">아티스트</p>
+      <p class="highlight-value">${escapeHtml(params.artistLabel)}</p>
+    </div>
+    <div class="highlight">
+      <p class="highlight-label">공연일</p>
+      <p class="highlight-value">${escapeHtml(params.startDate)}${params.venue ? ` · ${escapeHtml(params.venue)}` : ''}</p>
+    </div>
+    <div class="highlight">
+      <p class="highlight-label">제출자</p>
+      <p class="highlight-value">${escapeHtml(params.submitterEmail)}</p>
+    </div>
+    <a href="${reviewUrl}" class="btn">검토하러 가기</a>
+  `
+  return layout(content)
+}
+
+export function submissionReceivedHtml(params: {
+  title: string
+  artistLabel: string
+  startDate: string
+}) {
+  const content = `
+    <h1>제보가 접수되었습니다</h1>
+    <p>소중한 공연 정보를 공유해주셔서 감사합니다. 관리자 검토 후 1~3일 내에 등록 여부를 이메일로 알려드립니다.</p>
+    <div class="highlight">
+      <p class="highlight-label">공연</p>
+      <p class="highlight-value">${escapeHtml(params.title)}</p>
+    </div>
+    <div class="highlight">
+      <p class="highlight-label">아티스트</p>
+      <p class="highlight-value">${escapeHtml(params.artistLabel)}</p>
+    </div>
+    <div class="highlight">
+      <p class="highlight-label">공연일</p>
+      <p class="highlight-value">${escapeHtml(params.startDate)}</p>
+    </div>
+    <p style="font-size: 12px; color: #9ca3af;">본인이 제출하지 않은 경우 이 메일을 무시해주세요.</p>
+  `
+  return layout(content)
+}
+
+export function submissionApprovedHtml(params: {
+  title: string
+  performanceId: string
+}) {
+  const performanceUrl = `${SITE_URL}/performances/${params.performanceId}`
+  const content = `
+    <h1>제보가 등록되었습니다</h1>
+    <p>공유해주신 공연 정보가 ${SITE_NAME}에 정식 등록되었습니다. 감사합니다!</p>
+    <div class="highlight">
+      <p class="highlight-label">공연</p>
+      <p class="highlight-value">${escapeHtml(params.title)}</p>
+    </div>
+    <a href="${performanceUrl}" class="btn">공연 페이지 보기</a>
+  `
+  return layout(content)
+}
+
+export function submissionRejectedHtml(params: {
+  title: string
+  reason: string
+}) {
+  const content = `
+    <h1>제보를 등록하지 못했습니다</h1>
+    <p>공유해주신 공연 정보는 아래 사유로 등록하지 못했습니다.</p>
+    <div class="highlight">
+      <p class="highlight-label">공연</p>
+      <p class="highlight-value">${escapeHtml(params.title)}</p>
+    </div>
+    <div class="highlight">
+      <p class="highlight-label">사유</p>
+      <p class="highlight-value">${escapeHtml(params.reason)}</p>
+    </div>
+    <p>정보를 보완해 다시 제보해주시면 감사하겠습니다.</p>
   `
   return layout(content)
 }

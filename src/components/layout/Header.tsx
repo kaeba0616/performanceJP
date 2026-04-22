@@ -24,6 +24,7 @@ export function Header() {
     { href: "/", label: "홈", en: "Home" },
     { href: "/calendar", label: "캘린더", en: "Schedules" },
     { href: "/artists", label: "아티스트", en: "Artists" },
+    { href: "/submit", label: "제보", en: "Submit" },
     { href: "/subscribe", label: "알림", en: "Alerts" },
   ];
 

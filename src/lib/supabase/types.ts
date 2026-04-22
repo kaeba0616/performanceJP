@@ -233,6 +233,115 @@ export interface Database {
           }
         ]
       }
+      submissions: {
+        Row: {
+          id: string
+          submitter_email: string
+          submitter_name: string | null
+          submitter_ip: string | null
+          submitter_note: string | null
+          artist_id: string | null
+          proposed_artist_name_ko: string | null
+          proposed_artist_name_ja: string | null
+          proposed_artist_name_en: string | null
+          title: string
+          venue: string | null
+          city: string | null
+          start_date: string
+          end_date: string | null
+          ticket_open_at: string | null
+          presale_open_at: string | null
+          price_info: string | null
+          image_url: string | null
+          source_url: string | null
+          status: string
+          admin_note: string | null
+          rejection_reason: string | null
+          approved_performance_id: string | null
+          created_artist_id: string | null
+          created_at: string
+          reviewed_at: string | null
+        }
+        Insert: {
+          id?: string
+          submitter_email: string
+          submitter_name?: string | null
+          submitter_ip?: string | null
+          submitter_note?: string | null
+          artist_id?: string | null
+          proposed_artist_name_ko?: string | null
+          proposed_artist_name_ja?: string | null
+          proposed_artist_name_en?: string | null
+          title: string
+          venue?: string | null
+          city?: string | null
+          start_date: string
+          end_date?: string | null
+          ticket_open_at?: string | null
+          presale_open_at?: string | null
+          price_info?: string | null
+          image_url?: string | null
+          source_url?: string | null
+          status?: string
+          admin_note?: string | null
+          rejection_reason?: string | null
+          approved_performance_id?: string | null
+          created_artist_id?: string | null
+          created_at?: string
+          reviewed_at?: string | null
+        }
+        Update: {
+          id?: string
+          submitter_email?: string
+          submitter_name?: string | null
+          submitter_ip?: string | null
+          submitter_note?: string | null
+          artist_id?: string | null
+          proposed_artist_name_ko?: string | null
+          proposed_artist_name_ja?: string | null
+          proposed_artist_name_en?: string | null
+          title?: string
+          venue?: string | null
+          city?: string | null
+          start_date?: string
+          end_date?: string | null
+          ticket_open_at?: string | null
+          presale_open_at?: string | null
+          price_info?: string | null
+          image_url?: string | null
+          source_url?: string | null
+          status?: string
+          admin_note?: string | null
+          rejection_reason?: string | null
+          approved_performance_id?: string | null
+          created_artist_id?: string | null
+          created_at?: string
+          reviewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submissions_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submissions_approved_performance_id_fkey"
+            columns: ["approved_performance_id"]
+            isOneToOne: false
+            referencedRelation: "performances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submissions_created_artist_id_fkey"
+            columns: ["created_artist_id"]
+            isOneToOne: false
+            referencedRelation: "artists"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       notifications_log: {
         Row: {
           id: string

@@ -8,6 +8,7 @@ const navItems = [
   { href: "/admin", label: "대시보드", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1" },
   { href: "/admin/performances", label: "공연 관리", icon: "M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" },
   { href: "/admin/artists", label: "아티스트 관리", icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" },
+  { href: "/admin/submissions", label: "제보 검토", icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" },
   { href: "/admin/import", label: "데이터 가져오기", icon: "M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" },
 ];
 
@@ -18,6 +19,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [checking, setChecking] = useState(true);
   const [error, setError] = useState("");
   const [collapsed, setCollapsed] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
     const stored = localStorage.getItem("admin_token");
@@ -28,6 +30,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     if (isMobile || savedCollapsed === "true") setCollapsed(true);
     setChecking(false);
   }, []);
+
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/admin/submissions?status=pending", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        if (res.ok && !cancelled) {
+          const data = await res.json();
+          setPendingCount(data.counts?.pending ?? 0);
+        }
+      } catch {
+        // ignore
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [token, pathname]);
 
   function toggleSidebar() {
     const next = !collapsed;
@@ -119,25 +145,47 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </button>
         </div>
         <nav className="flex-1 px-2 py-4 space-y-1">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              title={collapsed ? item.label : undefined}
-              className={`flex items-center gap-3 rounded-lg text-sm transition-colors ${
-                collapsed ? "justify-center px-2 py-2.5" : "px-3 py-2"
-              } ${
-                isActive(item.href)
-                  ? "bg-[#0058be]/10 text-[#0058be] font-medium"
-                  : "text-[#424754] hover:bg-[#f3f4f6]"
-              }`}
-            >
-              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={item.icon} />
-              </svg>
-              {!collapsed && item.label}
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            const badge =
+              item.href === "/admin/submissions" && pendingCount > 0
+                ? pendingCount
+                : null;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                title={collapsed ? item.label : undefined}
+                className={`flex items-center gap-3 rounded-lg text-sm transition-colors ${
+                  collapsed ? "justify-center px-2 py-2.5" : "px-3 py-2"
+                } ${
+                  isActive(item.href)
+                    ? "bg-[#0058be]/10 text-[#0058be] font-medium"
+                    : "text-[#424754] hover:bg-[#f3f4f6]"
+                }`}
+              >
+                <div className="relative">
+                  <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={item.icon} />
+                  </svg>
+                  {collapsed && badge !== null && (
+                    <span className="absolute -top-1 -right-1.5 bg-[#da3437] text-white text-[9px] font-bold rounded-full min-w-[14px] h-[14px] flex items-center justify-center px-1">
+                      {badge > 99 ? "99+" : badge}
+                    </span>
+                  )}
+                </div>
+                {!collapsed && (
+                  <>
+                    <span className="flex-1">{item.label}</span>
+                    {badge !== null && (
+                      <span className="bg-[#da3437] text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1.5">
+                        {badge > 99 ? "99+" : badge}
+                      </span>
+                    )}
+                  </>
+                )}
+              </Link>
+            );
+          })}
         </nav>
         <div className="px-2 py-4 border-t border-[#e5e7eb]">
           <button

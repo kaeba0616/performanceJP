@@ -13,7 +13,7 @@ interface PerformanceRow {
 
 export default function AdminDashboard() {
   const [token, setToken] = useState<string | null>(null);
-  const [stats, setStats] = useState({ performances: 0, artists: 0, sourceListings: 0 });
+  const [stats, setStats] = useState({ performances: 0, artists: 0, sourceListings: 0, pendingSubmissions: 0 });
   const [recentPerformances, setRecentPerformances] = useState<PerformanceRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,9 +27,10 @@ export default function AdminDashboard() {
     try {
       const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
 
-      const [perfRes, artistRes] = await Promise.all([
+      const [perfRes, artistRes, subRes] = await Promise.all([
         fetch("/api/admin/performances", { headers }),
         fetch("/api/admin/artists", { headers }),
+        fetch("/api/admin/submissions?status=pending", { headers }),
       ]);
 
       if (perfRes.ok) {
@@ -51,6 +52,11 @@ export default function AdminDashboard() {
       if (artistRes.ok) {
         const artistData = await artistRes.json();
         setStats((prev) => ({ ...prev, artists: (artistData.artists || []).length }));
+      }
+
+      if (subRes.ok) {
+        const subData = await subRes.json();
+        setStats((prev) => ({ ...prev, pendingSubmissions: subData.counts?.pending ?? 0 }));
       }
     } catch {
       // ignore
@@ -81,6 +87,7 @@ export default function AdminDashboard() {
     { label: "공연", value: stats.performances, unit: "건", color: "text-[#0058be]" },
     { label: "아티스트", value: stats.artists, unit: "명", color: "text-[#7c3aed]" },
     { label: "티켓링크", value: stats.sourceListings, unit: "건", color: "text-[#059669]" },
+    { label: "대기 중 제보", value: stats.pendingSubmissions, unit: "건", color: "text-[#d97706]" },
   ];
 
   return (
@@ -92,7 +99,7 @@ export default function AdminDashboard() {
       ) : (
         <>
           {/* Stat cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
             {statCards.map((card) => (
               <div key={card.label} className="bg-white rounded-lg p-5 shadow-sm border border-[#e5e7eb]">
                 <p className="text-sm text-[#424754] mb-1">{card.label}</p>
