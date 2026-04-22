@@ -150,11 +150,13 @@ export default async function ArtistDetailPage({
       </div>
 
       {/* Hit Songs */}
-      {hitSongs.length > 0 && (
-        <div className="mb-16">
-          <SongList songs={hitSongs} title="대표곡" />
-        </div>
-      )}
+      <div className="mb-16">
+        <SongList
+          songs={hitSongs}
+          title="대표곡"
+          emptyLabel="아직 등록된 대표곡이 없습니다."
+        />
+      </div>
 
       {/* Upcoming performances */}
       {upcoming.length > 0 && (

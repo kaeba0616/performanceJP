@@ -154,7 +154,11 @@ export default async function PerformanceDetailPage({
           <SourceLinks listings={performance.source_listings} size="large" />
 
           {/* Setlist */}
-          <SongList songs={setlistSongs} title="셋리스트" />
+          <SongList
+            songs={setlistSongs}
+            title="셋리스트"
+            emptyLabel="공연 후 셋리스트가 등록될 예정입니다."
+          />
         </div>
 
         {/* Right Column */}
