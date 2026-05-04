@@ -173,10 +173,13 @@ export default async function MePage() {
             <StampIcon className="w-3.5 h-3.5" />내 스탬프
           </Link>
           {profile.is_public ? (
-            <span className="inline-flex items-center gap-2 bg-surface-container text-on-surface-variant font-semibold px-4 py-2 rounded-full text-sm">
+            <Link
+              href={`/u/${profile.handle}`}
+              className="inline-flex items-center gap-2 bg-surface-container text-on-surface font-semibold px-4 py-2 rounded-full text-sm hover:bg-surface-container-high transition"
+            >
               <Share2 className="w-3.5 h-3.5" />
-              공개 프로필 (PR3에서 활성화)
-            </span>
+              공개 프로필 보기
+            </Link>
           ) : (
             <span className="inline-flex items-center gap-2 bg-surface-container text-on-surface-variant font-semibold px-4 py-2 rounded-full text-sm">
               비공개 모드 — 설정에서 변경 가능
