@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 
 function verifyAdmin(request: Request): boolean {
   const authHeader = request.headers.get("authorization");
@@ -14,7 +14,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const status = url.searchParams.get("status");
 
-  const supabase = createServerClient();
+  const supabase = createServiceClient();
   let query = supabase
     .from("submissions")
     .select(

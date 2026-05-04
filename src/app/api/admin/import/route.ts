@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import { matchArtist, type ArtistKeyword } from "@/lib/crawlers/matcher";
 import artistKeywords from "@/lib/artists-keywords.json";
 
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No items" }, { status: 400 });
   }
 
-  const supabase = createServerClient();
+  const supabase = createServiceClient();
   const keywords = artistKeywords as ArtistKeyword[];
   let imported = 0;
   let skipped = 0;

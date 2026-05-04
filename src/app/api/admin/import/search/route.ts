@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as cheerio from "cheerio";
-import { createServerClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import { matchArtist, hasJapaneseCharacters, type ArtistKeyword } from "@/lib/crawlers/matcher";
 import { parseKoreanDate } from "@/lib/crawlers/base";
 import artistKeywords from "@/lib/artists-keywords.json";
@@ -121,7 +121,7 @@ export async function GET(request: NextRequest) {
 
   // Check which ones are already in DB
   if (results.length > 0) {
-    const supabase = createServerClient();
+    const supabase = createServiceClient();
     const sourceUrls = results.map((r) => r.sourceUrl);
     const { data: existing } = await supabase
       .from("source_listings")

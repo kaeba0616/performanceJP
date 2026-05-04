@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 
 function verifyAdmin(request: Request): boolean {
   const authHeader = request.headers.get("authorization");
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const supabase = createServerClient();
+  const supabase = createServiceClient();
 
   const { data, error } = await supabase
     .from("source_listings")

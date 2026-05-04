@@ -2,10 +2,14 @@
 
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Search, Menu, X, Bell } from "lucide-react";
 
-export function Header() {
+interface HeaderProps {
+  userSlot?: ReactNode;
+}
+
+export function Header({ userSlot }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [query, setQuery] = useState("");
@@ -79,6 +83,8 @@ export function Header() {
           >
             <Bell className="w-5 h-5" />
           </Link>
+
+          {userSlot}
 
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

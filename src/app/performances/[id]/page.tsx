@@ -3,7 +3,7 @@ import { ChevronRight, MapPin, CalendarDays, Ticket, Wallet, ArrowRight } from "
 import { TicketCountdown } from "@/components/performance/TicketCountdown";
 import { SourceLinks } from "@/components/performance/SourceLinks";
 import { SongList } from "@/components/SongList";
-import { createServerClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import { formatDate, formatDateTime } from "@/lib/utils/date";
 import { normalizeSongs, type PerformanceWithDetails } from "@/types";
 
@@ -17,7 +17,7 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 async function getPerformance(
   id: string
 ): Promise<PerformanceWithDetails | null> {
-  const supabase = createServerClient();
+  const supabase = createServiceClient();
 
   const { data } = await supabase
     .from("performances")

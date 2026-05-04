@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
-  const supabase = createServerClient();
+  const supabase = createServiceClient();
   const { searchParams } = new URL(request.url);
   const month = searchParams.get("month"); // e.g., "2026-04"
   const status = searchParams.get("status");

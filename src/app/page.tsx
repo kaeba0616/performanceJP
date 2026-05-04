@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { Calendar, BellRing, Sparkles, Music } from "lucide-react";
 import { PerformanceSection } from "@/components/home/PerformanceSection";
-import { createServerClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils/date";
 import type { Performance } from "@/types";
 
 async function getLandingData() {
-  const supabase = createServerClient();
+  const supabase = createServiceClient();
   const nowIso = new Date().toISOString();
   const todayIso = nowIso.split("T")[0];
 

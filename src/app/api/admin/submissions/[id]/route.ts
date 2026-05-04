@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
+import type { Database } from "@/lib/supabase/types";
+
+type SubmissionUpdate = Database["public"]["Tables"]["submissions"]["Update"];
 
 function verifyAdmin(request: Request): boolean {
   const authHeader = request.headers.get("authorization");
@@ -15,7 +18,7 @@ export async function GET(
   }
 
   const { id } = await params;
-  const supabase = createServerClient();
+  const supabase = createServiceClient();
   const { data, error } = await supabase
     .from("submissions")
     .select("*, artist:artists!submissions_artist_id_fkey(id, name_ko, name_en)")
@@ -58,15 +61,16 @@ export async function PATCH(
   const { id } = await params;
   const body = (await request.json()) as Record<string, unknown>;
 
-  const update: Record<string, unknown> = {};
+  const update: SubmissionUpdate = {};
   for (const key of EDITABLE_FIELDS) {
     if (key in body) {
       const v = body[key];
-      update[key] = typeof v === "string" && v.trim() === "" ? null : v;
+      const normalized = typeof v === "string" && v.trim() === "" ? null : v;
+      (update as Record<string, unknown>)[key] = normalized;
     }
   }
 
-  const supabase = createServerClient();
+  const supabase = createServiceClient();
 
   // Prevent editing already-reviewed submissions
   const { data: existing } = await supabase

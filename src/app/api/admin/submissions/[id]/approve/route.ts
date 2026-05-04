@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import { inferSourceFromUrl } from "@/lib/submissions/validate";
 import { sendSubmissionApproved } from "@/lib/notifications/sender";
 
@@ -22,7 +22,7 @@ export async function POST(
     createNewArtist?: boolean;
   };
 
-  const supabase = createServerClient();
+  const supabase = createServiceClient();
 
   const { data: submission, error: subErr } = await supabase
     .from("submissions")
