@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Stamp as StampIcon } from "lucide-react";
 import { PerformanceCard } from "@/components/performance/PerformanceCard";
 import { SongList } from "@/components/SongList";
-import { createServiceClient } from "@/lib/supabase/server";
+import { createServiceClient, createServerSupabase } from "@/lib/supabase/server";
 import { normalizeSongs } from "@/types";
 
 async function getArtistWithPerformances(id: string) {
@@ -55,6 +55,22 @@ export default async function ArtistDetailPage({
     (p) => p.status !== "completed"
   );
   const past = performances.filter((p) => p.status === "completed");
+
+  // 로그인 사용자 본인 스탬프 카운트 (이 아티스트 한정)
+  const userSupabase = await createServerSupabase();
+  const {
+    data: { user },
+  } = await userSupabase.auth.getUser();
+  let myStampCount = 0;
+  if (user && performances.length > 0) {
+    const ids = performances.map((p) => p.id);
+    const { count } = await userSupabase
+      .from("user_attendances")
+      .select("user_id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .in("performance_id", ids);
+    myStampCount = count ?? 0;
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-6 pt-8 pb-24">
@@ -157,6 +173,20 @@ export default async function ArtistDetailPage({
           emptyLabel="아직 등록된 대표곡이 없습니다."
         />
       </div>
+
+      {myStampCount > 0 && (
+        <div className="mb-12 flex items-center gap-2 text-sm text-on-surface-variant">
+          <StampIcon className="w-4 h-4 text-tertiary" />
+          이 아티스트를{" "}
+          <span className="font-black text-on-surface">{myStampCount}번</span> 봤어요
+          <Link
+            href="/me/stamps"
+            className="ml-2 text-primary font-bold hover:underline"
+          >
+            내 스탬프 →
+          </Link>
+        </div>
+      )}
 
       {/* Upcoming performances */}
       {upcoming.length > 0 && (
