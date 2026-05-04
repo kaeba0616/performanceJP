@@ -2,9 +2,11 @@ import Link from "next/link";
 import { ChevronRight, MapPin, CalendarDays, Ticket, Wallet, ArrowRight } from "lucide-react";
 import { TicketCountdown } from "@/components/performance/TicketCountdown";
 import { SourceLinks } from "@/components/performance/SourceLinks";
+import { AttendanceButton } from "@/components/performance/AttendanceButton";
 import { SongList } from "@/components/SongList";
-import { createServiceClient } from "@/lib/supabase/server";
+import { createServiceClient, createServerSupabase } from "@/lib/supabase/server";
 import { formatDate, formatDateTime } from "@/lib/utils/date";
+import { isStartedKST } from "@/lib/utils/kst";
 import { normalizeSongs, type PerformanceWithDetails } from "@/types";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
@@ -36,6 +38,21 @@ export default async function PerformanceDetailPage({
   const { id } = await params;
   const performance = await getPerformance(id);
 
+  const supabase = await createServerSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  let initialAttended = false;
+  if (user && performance) {
+    const { data } = await supabase
+      .from("user_attendances")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .eq("performance_id", id)
+      .maybeSingle();
+    initialAttended = !!data;
+  }
+
   if (!performance) {
     return (
       <div className="mx-auto max-w-4xl px-6 py-24 text-center">
@@ -55,6 +72,7 @@ export default async function PerformanceDetailPage({
   const status = statusConfig[performance.status] || statusConfig.upcoming;
   const image = performance.image_url || performance.artist?.image_url || null;
   const setlistSongs = normalizeSongs(performance.setlist);
+  const canStamp = isStartedKST(performance.start_date);
 
   return (
     <div className="mx-auto max-w-7xl px-6 pt-8 pb-20">
@@ -163,6 +181,15 @@ export default async function PerformanceDetailPage({
 
         {/* Right Column */}
         <div className="lg:sticky lg:top-24 space-y-6">
+          {canStamp && (
+            <AttendanceButton
+              performanceId={performance.id}
+              initialAttended={initialAttended}
+              isLoggedIn={!!user}
+              pathname={`/performances/${performance.id}`}
+            />
+          )}
+
           {performance.ticket_open_at && (
             <TicketCountdown ticketOpenAt={performance.ticket_open_at} />
           )}
