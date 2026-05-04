@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createServerClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import { normalizeSongs } from "@/types";
 
 const gradients = [
@@ -12,7 +12,7 @@ const gradients = [
 ];
 
 async function getArtists() {
-  const supabase = createServerClient();
+  const supabase = createServiceClient();
 
   const { data: artists } = await supabase
     .from("artists")

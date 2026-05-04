@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import {
   validateSubmissionInput,
   artistLabel,
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
   }
 
   const input: SubmissionInput = result.data;
-  const supabase = createServerClient();
+  const supabase = createServiceClient();
   const ip = clientIp(request);
 
   // IP-based rate limit (best-effort)

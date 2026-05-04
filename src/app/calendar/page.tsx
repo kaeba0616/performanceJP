@@ -1,9 +1,9 @@
 import { CalendarGrid } from "@/components/calendar/CalendarGrid";
-import { createServerClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import type { Performance } from "@/types";
 
 async function getAllPerformances(): Promise<Performance[]> {
-  const supabase = createServerClient();
+  const supabase = createServiceClient();
 
   const { data } = await supabase
     .from("performances")

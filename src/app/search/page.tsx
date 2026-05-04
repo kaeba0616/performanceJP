@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { SearchX } from "lucide-react";
 import { PerformanceCard } from "@/components/performance/PerformanceCard";
-import { createServerClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import type { Performance } from "@/types";
 
 async function searchArtists(query: string) {
-  const supabase = createServerClient();
+  const supabase = createServiceClient();
   const pattern = `%${query}%`;
 
   const { data: artists } = await supabase

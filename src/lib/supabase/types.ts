@@ -381,6 +381,71 @@ export interface Database {
           }
         ]
       }
+      profiles: {
+        Row: {
+          id: string
+          handle: string | null
+          display_name: string | null
+          avatar_url: string | null
+          bio: string | null
+          is_public: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          handle?: string | null
+          display_name?: string | null
+          avatar_url?: string | null
+          bio?: string | null
+          is_public?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          handle?: string | null
+          display_name?: string | null
+          avatar_url?: string | null
+          bio?: string | null
+          is_public?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_attendances: {
+        Row: {
+          user_id: string
+          performance_id: string
+          attended_at: string
+          note: string | null
+          created_at: string
+        }
+        Insert: {
+          user_id: string
+          performance_id: string
+          attended_at?: string
+          note?: string | null
+          created_at?: string
+        }
+        Update: {
+          user_id?: string
+          performance_id?: string
+          attended_at?: string
+          note?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_attendances_performance_id_fkey"
+            columns: ["performance_id"]
+            isOneToOne: false
+            referencedRelation: "performances"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never

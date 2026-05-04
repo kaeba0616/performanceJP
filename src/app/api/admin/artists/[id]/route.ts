@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import type { Json } from "@/lib/supabase/types";
 import { normalizeSongs } from "@/types";
 
@@ -40,7 +40,7 @@ export async function PUT(
         ? null
         : cleanedSongs;
 
-  const supabase = createServerClient();
+  const supabase = createServiceClient();
 
   const { data, error } = await supabase
     .from("artists")
@@ -80,7 +80,7 @@ export async function DELETE(
   }
 
   const { id } = await params;
-  const supabase = createServerClient();
+  const supabase = createServiceClient();
 
   const { error } = await supabase
     .from("artists")

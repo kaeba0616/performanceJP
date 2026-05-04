@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/server'
 
 export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get('token')
@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     })
   }
 
-  const supabase = createServerClient()
+  const supabase = createServiceClient()
 
   const { data: subscriber, error } = await supabase
     .from('subscribers')

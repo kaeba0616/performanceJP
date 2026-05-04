@@ -4,6 +4,7 @@ import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
+import { UserMenu } from "@/components/layout/UserMenu";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -37,7 +38,7 @@ export default function RootLayout({
         `}</style>
       </head>
       <body className="min-h-full flex flex-col">
-        <Header />
+        <Header userSlot={<UserMenu />} />
         <main className="flex-1 pt-[68px] pb-20 md:pb-0">{children}</main>
         <Footer />
         <MobileBottomNav />

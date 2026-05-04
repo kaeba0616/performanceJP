@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import { sendSubmissionRejected } from "@/lib/notifications/sender";
 
 function verifyAdmin(request: Request): boolean {
@@ -25,7 +25,7 @@ export async function POST(
     );
   }
 
-  const supabase = createServerClient();
+  const supabase = createServiceClient();
   const { data: submission, error: selErr } = await supabase
     .from("submissions")
     .select("id, status, submitter_email, title")

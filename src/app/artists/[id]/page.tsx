@@ -2,11 +2,11 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { PerformanceCard } from "@/components/performance/PerformanceCard";
 import { SongList } from "@/components/SongList";
-import { createServerClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import { normalizeSongs } from "@/types";
 
 async function getArtistWithPerformances(id: string) {
-  const supabase = createServerClient();
+  const supabase = createServiceClient();
 
   const { data: artist } = await supabase
     .from("artists")
