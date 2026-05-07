@@ -117,19 +117,49 @@ export default function NewPerformancePage() {
       const perfData = await perfRes.json();
       const performanceId = perfData.performance.id;
 
-      // Create source listings
-      for (const link of sourceLinks) {
-        if (!link.source_url.trim()) continue;
-        await fetch("/api/admin/source-listings", {
-          method: "POST",
-          headers,
-          body: JSON.stringify({
-            performance_id: performanceId,
-            source: link.source,
-            source_url: link.source_url.trim(),
-            raw_title: link.raw_title.trim() || title.trim(),
-          }),
-        });
+      // 티켓 링크들을 병렬로 생성하면서 실패 행을 수집
+      const linkResults = await Promise.all(
+        sourceLinks
+          .filter((l) => l.source_url.trim())
+          .map(async (link) => {
+            try {
+              const res = await fetch("/api/admin/source-listings", {
+                method: "POST",
+                headers,
+                body: JSON.stringify({
+                  performance_id: performanceId,
+                  source: link.source,
+                  source_url: link.source_url.trim(),
+                  raw_title: link.raw_title.trim() || title.trim(),
+                }),
+              });
+              if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                return {
+                  ok: false as const,
+                  link,
+                  message: err.error || `HTTP ${res.status}`,
+                };
+              }
+              return { ok: true as const, link };
+            } catch {
+              return { ok: false as const, link, message: "네트워크 오류" };
+            }
+          })
+      );
+
+      const failed = linkResults.filter((r) => !r.ok);
+      if (failed.length > 0) {
+        const summary = failed
+          .map((f) => `• ${f.link.source} ${f.link.source_url}: ${f.message}`)
+          .join("\n");
+        setError(
+          `공연은 저장됐지만 ${failed.length}개 티켓 링크 추가 실패:\n${summary}\n` +
+            `편집 페이지에서 다시 추가해주세요.`
+        );
+        // 실패가 있어도 perf는 만들어졌으니 편집 페이지로 보냄
+        router.push(`/admin/performances/${performanceId}/edit`);
+        return;
       }
 
       router.push("/admin/performances");
@@ -267,6 +297,8 @@ export default function NewPerformancePage() {
                           <option value="yes24">YES24</option>
                           <option value="interpark">인터파크</option>
                           <option value="melon">멜론티켓</option>
+                          <option value="ticketlink">티켓링크</option>
+                          <option value="other">기타</option>
                         </select>
                       </div>
                       <div className="col-span-2">
@@ -306,7 +338,9 @@ export default function NewPerformancePage() {
           )}
         </div>
 
-        {error && <p className="text-sm text-[#da3437]">{error}</p>}
+        {error && (
+          <p className="text-sm text-[#da3437] whitespace-pre-line">{error}</p>
+        )}
 
         <div className="flex gap-3">
           <button

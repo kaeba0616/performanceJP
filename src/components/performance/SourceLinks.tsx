@@ -20,6 +20,17 @@ const sourceConfig: Record<
     className: "btn-melon",
     timeHost: "ticket.melon.com",
   },
+  ticketlink: {
+    label: "티켓링크",
+    className: "btn-ticketlink",
+    timeHost: "www.ticketlink.co.kr",
+  },
+  other: {
+    label: "예매하기",
+    className: "btn-other",
+    // 기타 예매처는 도메인이 다양해서 서버시간 링크 미표시
+    timeHost: "",
+  },
 };
 
 export function SourceLinks({
