@@ -13,13 +13,23 @@ function resolveOrigin(request: NextRequest): string {
   return new URL(request.url).origin;
 }
 
+// Reject protocol-relative ('//evil.com'), absolute ('https://evil.com'),
+// and backslash-prefixed paths to prevent open redirect via ?next=.
+function safeNextPath(raw: string | null): string {
+  if (!raw) return "/me";
+  if (!raw.startsWith("/")) return "/me";
+  if (raw.startsWith("//") || raw.startsWith("/\\")) return "/me";
+  if (/[\r\n\t]/.test(raw)) return "/me";
+  return raw;
+}
+
 export async function GET(request: NextRequest) {
   const origin = resolveOrigin(request);
 
   try {
     const requestUrl = new URL(request.url);
     const code = requestUrl.searchParams.get("code");
-    const next = requestUrl.searchParams.get("next") || "/me";
+    const next = safeNextPath(requestUrl.searchParams.get("next"));
 
     if (!code) {
       return NextResponse.redirect(`${origin}/login?error=missing_code`);
