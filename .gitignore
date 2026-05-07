@@ -42,3 +42,6 @@ next-env.d.ts
 
 # design
 design-prompts.md
+
+# nginx symlink for prod host (jpop.ernebi.org → /etc/nginx/sites-available/...)
+/jpop.ernebi.org
