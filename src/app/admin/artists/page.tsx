@@ -33,8 +33,9 @@ const emptyForm: ArtistForm = {
   hit_songs: [],
 };
 
+const headers = { "Content-Type": "application/json" };
+
 export default function AdminArtistsPage() {
-  const [token, setToken] = useState<string | null>(null);
   const [artists, setArtists] = useState<ArtistRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [addForm, setAddForm] = useState<ArtistForm>({ ...emptyForm });
@@ -42,20 +43,10 @@ export default function AdminArtistsPage() {
   const [editForm, setEditForm] = useState<ArtistForm>({ ...emptyForm });
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    setToken(localStorage.getItem("admin_token"));
-  }, []);
-
-  const headers = useCallback(
-    () => ({ Authorization: `Bearer ${token}`, "Content-Type": "application/json" }),
-    [token]
-  );
-
   const fetchArtists = useCallback(async () => {
-    if (!token) return;
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/artists", { headers: headers() });
+      const res = await fetch("/api/admin/artists", { headers });
       if (res.ok) {
         const data = await res.json();
         setArtists(data.artists || []);
@@ -65,7 +56,7 @@ export default function AdminArtistsPage() {
     } finally {
       setLoading(false);
     }
-  }, [token, headers]);
+  }, []);
 
   useEffect(() => {
     fetchArtists();
@@ -88,7 +79,7 @@ export default function AdminArtistsPage() {
       const cleanedSongs = sanitizeSongs(addForm.hit_songs);
       const res = await fetch("/api/admin/artists", {
         method: "POST",
-        headers: headers(),
+        headers,
         body: JSON.stringify({
           name_ko: addForm.name_ko.trim(),
           name_en: addForm.name_en.trim() || null,
@@ -102,7 +93,7 @@ export default function AdminArtistsPage() {
         if (addForm.instagram_url.trim() || addForm.youtube_url.trim()) {
           await fetch(`/api/admin/artists/${data.artist.id}`, {
             method: "PUT",
-            headers: headers(),
+            headers,
             body: JSON.stringify({
               name_ko: addForm.name_ko.trim(),
               name_en: addForm.name_en.trim() || null,
@@ -151,7 +142,7 @@ export default function AdminArtistsPage() {
       const cleanedSongs = sanitizeSongs(editForm.hit_songs);
       const res = await fetch(`/api/admin/artists/${editingId}`, {
         method: "PUT",
-        headers: headers(),
+        headers,
         body: JSON.stringify({
           name_ko: editForm.name_ko.trim(),
           name_en: editForm.name_en.trim() || null,
@@ -181,7 +172,7 @@ export default function AdminArtistsPage() {
     try {
       const res = await fetch(`/api/admin/artists/${id}`, {
         method: "DELETE",
-        headers: headers(),
+        headers,
       });
       if (res.ok) {
         setArtists((prev) => prev.filter((a) => a.id !== id));

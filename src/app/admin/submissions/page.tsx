@@ -26,7 +26,6 @@ const FILTERS: { value: FilterStatus; label: string }[] = [
 ];
 
 export default function AdminSubmissionsPage() {
-  const [token, setToken] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterStatus>("pending");
   const [rows, setRows] = useState<SubmissionRow[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({
@@ -35,13 +34,7 @@ export default function AdminSubmissionsPage() {
     rejected: 0,
   });
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    setToken(localStorage.getItem("admin_token"));
-  }, []);
-
   const fetchData = useCallback(async () => {
-    if (!token) return;
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -50,7 +43,6 @@ export default function AdminSubmissionsPage() {
         `/api/admin/submissions?${params.toString()}`,
         {
           headers: {
-            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         }
@@ -65,7 +57,7 @@ export default function AdminSubmissionsPage() {
     } finally {
       setLoading(false);
     }
-  }, [token, filter]);
+  }, [filter]);
 
   useEffect(() => {
     fetchData();

@@ -19,7 +19,6 @@ interface SourceLinkRow {
 
 export default function NewPerformancePage() {
   const router = useRouter();
-  const [token, setToken] = useState<string | null>(null);
   const [artists, setArtists] = useState<ArtistOption[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -39,16 +38,10 @@ export default function NewPerformancePage() {
 
   // Source links
   const [sourceLinks, setSourceLinks] = useState<SourceLinkRow[]>([]);
-
-  useEffect(() => {
-    setToken(localStorage.getItem("admin_token"));
-  }, []);
-
   const fetchArtists = useCallback(async () => {
-    if (!token) return;
     try {
       const res = await fetch("/api/admin/artists", {
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       });
       if (res.ok) {
         const data = await res.json();
@@ -57,7 +50,7 @@ export default function NewPerformancePage() {
     } catch {
       // ignore
     }
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     fetchArtists();
@@ -86,7 +79,7 @@ export default function NewPerformancePage() {
     setError("");
 
     try {
-      const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+      const headers = { "Content-Type": "application/json" };
 
       const cleanedSetlist = setlist
         .map((s) => ({

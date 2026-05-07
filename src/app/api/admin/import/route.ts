@@ -3,10 +3,7 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { matchArtist, type ArtistKeyword } from "@/lib/crawlers/matcher";
 import artistKeywords from "@/lib/artists-keywords.json";
 
-function verifyAdmin(request: Request): boolean {
-  const authHeader = request.headers.get("authorization");
-  return authHeader === `Bearer ${process.env.CRON_SECRET}`;
-}
+import { verifyAdminRequest as verifyAdmin } from "@/lib/admin/auth";
 
 interface ImportItem {
   sourceId: string;

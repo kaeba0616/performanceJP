@@ -16,7 +16,6 @@ interface SearchResult {
 }
 
 export default function AdminImportPage() {
-  const [token, setToken] = useState<string | null>(null);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -25,19 +24,12 @@ export default function AdminImportPage() {
   const [page, setPage] = useState(1);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [filter, setFilter] = useState<"all" | "japanese" | "matched">("all");
-
-  useEffect(() => {
-    setToken(localStorage.getItem("admin_token"));
-  }, []);
-
   async function handleSearch(pageNum = 1) {
-    if (!token) return;
     setLoading(true);
     setMessage(null);
     try {
       const res = await fetch(
-        `/api/admin/import/search?page=${pageNum}&pageSize=40`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        `/api/admin/import/search?page=${pageNum}&pageSize=40`
       );
       if (!res.ok) throw new Error("검색 실패");
       const data = await res.json();
@@ -53,7 +45,7 @@ export default function AdminImportPage() {
   }
 
   async function handleImport() {
-    if (!token || selected.size === 0) return;
+    if (selected.size === 0) return;
     setImporting(true);
     setMessage(null);
 
@@ -73,7 +65,6 @@ export default function AdminImportPage() {
       const res = await fetch("/api/admin/import", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ items }),

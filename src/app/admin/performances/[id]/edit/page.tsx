@@ -28,8 +28,6 @@ export default function EditPerformancePage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
-
-  const [token, setToken] = useState<string | null>(null);
   const [artists, setArtists] = useState<ArtistOption[]>([]);
   const [existingLinks, setExistingLinks] = useState<SourceListing[]>([]);
   const [newLinks, setNewLinks] = useState<NewSourceLink[]>([]);
@@ -49,16 +47,10 @@ export default function EditPerformancePage() {
   const [priceInfo, setPriceInfo] = useState("");
   const [status, setStatus] = useState("upcoming");
   const [setlist, setSetlist] = useState<Song[]>([]);
-
-  useEffect(() => {
-    setToken(localStorage.getItem("admin_token"));
-  }, []);
-
   const fetchData = useCallback(async () => {
-    if (!token) return;
     setLoading(true);
     try {
-      const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+      const headers = { "Content-Type": "application/json" };
 
       const [perfRes, artistRes] = await Promise.all([
         fetch(`/api/performances/${id}`),
@@ -92,7 +84,7 @@ export default function EditPerformancePage() {
     } finally {
       setLoading(false);
     }
-  }, [token, id]);
+  }, [id]);
 
   useEffect(() => {
     fetchData();
@@ -115,7 +107,7 @@ export default function EditPerformancePage() {
     try {
       const res = await fetch(`/api/admin/source-listings/${linkId}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       });
       if (res.ok) {
         setExistingLinks((prev) => prev.filter((l) => l.id !== linkId));
@@ -138,7 +130,7 @@ export default function EditPerformancePage() {
     setError("");
 
     try {
-      const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+      const headers = { "Content-Type": "application/json" };
 
       const cleanedSetlist = setlist
         .map((s) => ({
