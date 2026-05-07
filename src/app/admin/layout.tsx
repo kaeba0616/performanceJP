@@ -2,7 +2,35 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useSyncExternalStore } from "react";
+
+const TOKEN_KEY = "admin_token";
+const COLLAPSE_KEY = "admin_sidebar_collapsed";
+
+// 같은 탭에서 setItem 후 useSyncExternalStore가 알 수 있도록 커스텀 이벤트 발행
+function setLocalStorageItem(key: string, value: string | null) {
+  if (value === null) localStorage.removeItem(key);
+  else localStorage.setItem(key, value);
+  window.dispatchEvent(new CustomEvent("admin-storage-change", { detail: { key } }));
+}
+
+function subscribeStorage(cb: () => void) {
+  const handler = () => cb();
+  window.addEventListener("storage", handler);
+  window.addEventListener("admin-storage-change", handler);
+  return () => {
+    window.removeEventListener("storage", handler);
+    window.removeEventListener("admin-storage-change", handler);
+  };
+}
+
+function useStoredString(key: string): string | null {
+  return useSyncExternalStore(
+    subscribeStorage,
+    () => localStorage.getItem(key),
+    () => null
+  );
+}
 
 const navItems = [
   { href: "/admin", label: "대시보드", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1" },
@@ -14,22 +42,18 @@ const navItems = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [token, setToken] = useState<string | null>(null);
+  const token = useStoredString(TOKEN_KEY);
+  const storedCollapsed = useStoredString(COLLAPSE_KEY);
   const [passwordInput, setPasswordInput] = useState("");
-  const [checking, setChecking] = useState(true);
   const [error, setError] = useState("");
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState<boolean | null>(null);
   const [pendingCount, setPendingCount] = useState(0);
 
-  useEffect(() => {
-    const stored = localStorage.getItem("admin_token");
-    if (stored) setToken(stored);
-    const savedCollapsed = localStorage.getItem("admin_sidebar_collapsed");
-    const isMobile =
-      typeof window !== "undefined" && window.innerWidth < 768;
-    if (isMobile || savedCollapsed === "true") setCollapsed(true);
-    setChecking(false);
-  }, []);
+  // 첫 클라이언트 렌더에서 모바일/저장값 판정. setState during render —
+  // collapsed !== null 가드로 단 1회만 실행됨.
+  if (collapsed === null && typeof window !== "undefined") {
+    setCollapsed(window.innerWidth < 768 || storedCollapsed === "true");
+  }
 
   useEffect(() => {
     if (!token) return;
@@ -58,7 +82,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   function toggleSidebar() {
     const next = !collapsed;
     setCollapsed(next);
-    localStorage.setItem("admin_sidebar_collapsed", String(next));
+    setLocalStorageItem(COLLAPSE_KEY, String(next));
   }
 
   function handleLogin(e: React.FormEvent) {
@@ -67,14 +91,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       setError("비밀번호를 입력하세요.");
       return;
     }
-    localStorage.setItem("admin_token", passwordInput.trim());
-    setToken(passwordInput.trim());
+    setLocalStorageItem(TOKEN_KEY, passwordInput.trim());
     setError("");
   }
 
   function handleLogout() {
-    localStorage.removeItem("admin_token");
-    setToken(null);
+    setLocalStorageItem(TOKEN_KEY, null);
   }
 
   function isActive(href: string) {
@@ -82,7 +104,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return pathname.startsWith(href);
   }
 
-  if (checking) {
+  // 서버 SSR 시점(token=null, collapsed=null)에서는 잠깐 빈 화면.
+  // useSyncExternalStore가 첫 클라이언트 렌더에서 localStorage 값을 동기적으로 채워줌.
+  if (collapsed === null) {
     return (
       <div className="min-h-screen bg-[#faf8ff] flex items-center justify-center">
         <div className="text-[#424754]">로딩 중...</div>

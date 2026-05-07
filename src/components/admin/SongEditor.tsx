@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { Song } from "@/types";
 
 interface SongEditorProps {
@@ -55,10 +55,16 @@ export function SongEditor({
   titlePlaceholder = "곡 제목",
 }: SongEditorProps) {
   const [rows, setRows] = useState<Row[]>(() => rowsFromValue(value));
+  const [prevValue, setPrevValue] = useState(value);
 
-  useEffect(() => {
-    setRows((prev) => (sameContent(prev, value) ? prev : rowsFromValue(value, prev)));
-  }, [value]);
+  // 부모가 value를 외부에서 교체했을 때(예: 서버에서 다시 로드)
+  // 로컬 rows를 동기화. setState during render 패턴 — useEffect 대신.
+  if (value !== prevValue) {
+    setPrevValue(value);
+    if (!sameContent(rows, value)) {
+      setRows(rowsFromValue(value, rows));
+    }
+  }
 
   function commit(next: Row[]) {
     setRows(next);
