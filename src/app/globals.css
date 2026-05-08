@@ -282,3 +282,15 @@
 .btn-melon:hover {
   background: #009950;
 }
+.btn-ticketlink {
+  background: #ff5a5f;
+}
+.btn-ticketlink:hover {
+  background: #e64a4f;
+}
+.btn-other {
+  background: #424754;
+}
+.btn-other:hover {
+  background: #2e3340;
+}

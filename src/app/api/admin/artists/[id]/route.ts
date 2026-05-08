@@ -3,10 +3,7 @@ import { createServiceClient } from "@/lib/supabase/server";
 import type { Json } from "@/lib/supabase/types";
 import { normalizeSongs } from "@/types";
 
-function verifyAdmin(request: Request): boolean {
-  const authHeader = request.headers.get("authorization");
-  return authHeader === `Bearer ${process.env.CRON_SECRET}`;
-}
+import { verifyAdminRequest as verifyAdmin } from "@/lib/admin/auth";
 
 export async function PUT(
   request: Request,

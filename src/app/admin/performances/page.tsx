@@ -29,20 +29,13 @@ const statusColor: Record<string, string> = {
 };
 
 export default function AdminPerformancesPage() {
-  const [token, setToken] = useState<string | null>(null);
   const [performances, setPerformances] = useState<PerformanceRow[]>([]);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    setToken(localStorage.getItem("admin_token"));
-  }, []);
-
   const fetchPerformances = useCallback(async () => {
-    if (!token) return;
     setLoading(true);
     try {
       const res = await fetch("/api/admin/performances", {
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       });
       if (res.ok) {
         const data = await res.json();
@@ -53,7 +46,7 @@ export default function AdminPerformancesPage() {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     fetchPerformances();
@@ -64,7 +57,7 @@ export default function AdminPerformancesPage() {
     try {
       const res = await fetch(`/api/admin/performances/${id}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       });
       if (res.ok) {
         setPerformances((prev) => prev.filter((p) => p.id !== id));

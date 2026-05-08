@@ -8,8 +8,10 @@ interface Props {
 }
 
 function getRedirectUrl(next?: string) {
-  if (typeof window === "undefined") return "";
-  const url = new URL("/auth/callback", window.location.origin);
+  const base =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    (typeof window !== "undefined" ? window.location.origin : "");
+  const url = new URL("/auth/callback", base);
   if (next) url.searchParams.set("next", next);
   return url.toString();
 }

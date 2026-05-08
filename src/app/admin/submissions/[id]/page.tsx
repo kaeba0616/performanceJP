@@ -48,8 +48,6 @@ export default function AdminSubmissionDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const id = params.id;
-
-  const [token, setToken] = useState<string | null>(null);
   const [sub, setSub] = useState<SubmissionDetail | null>(null);
   const [artists, setArtists] = useState<ArtistOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,17 +79,11 @@ export default function AdminSubmissionDetailPage() {
   // Reject modal
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
-
-  useEffect(() => {
-    setToken(localStorage.getItem("admin_token"));
-  }, []);
-
   const fetchData = useCallback(async () => {
-    if (!token || !id) return;
+    if (!id) return;
     setLoading(true);
     try {
       const headers = {
-        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       };
       const [subRes, artistsRes] = await Promise.all([
@@ -134,21 +126,20 @@ export default function AdminSubmissionDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [token, id]);
+  }, [id]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
   async function handleSave() {
-    if (!token || !sub) return;
+    if (!sub) return;
     setSaving(true);
     setError("");
     try {
       const res = await fetch(`/api/admin/submissions/${sub.id}`, {
         method: "PATCH",
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -182,7 +173,7 @@ export default function AdminSubmissionDetailPage() {
   }
 
   async function handleApprove() {
-    if (!token || !sub) return;
+    if (!sub) return;
 
     // Persist edits first
     await handleSave();
@@ -195,7 +186,6 @@ export default function AdminSubmissionDetailPage() {
         {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
@@ -218,7 +208,7 @@ export default function AdminSubmissionDetailPage() {
   }
 
   async function handleReject() {
-    if (!token || !sub) return;
+    if (!sub) return;
     if (!rejectReason.trim()) {
       setError("거절 사유를 입력해주세요.");
       return;
@@ -231,7 +221,6 @@ export default function AdminSubmissionDetailPage() {
         {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ reason: rejectReason.trim() }),

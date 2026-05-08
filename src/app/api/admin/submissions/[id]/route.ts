@@ -2,12 +2,9 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/types";
 
+import { verifyAdminRequest as verifyAdmin } from "@/lib/admin/auth";
 type SubmissionUpdate = Database["public"]["Tables"]["submissions"]["Update"];
 
-function verifyAdmin(request: Request): boolean {
-  const authHeader = request.headers.get("authorization");
-  return authHeader === `Bearer ${process.env.CRON_SECRET}`;
-}
 
 export async function GET(
   request: Request,

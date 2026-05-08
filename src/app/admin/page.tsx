@@ -12,25 +12,16 @@ interface PerformanceRow {
 }
 
 export default function AdminDashboard() {
-  const [token, setToken] = useState<string | null>(null);
   const [stats, setStats] = useState({ performances: 0, artists: 0, sourceListings: 0, pendingSubmissions: 0 });
   const [recentPerformances, setRecentPerformances] = useState<PerformanceRow[]>([]);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    setToken(localStorage.getItem("admin_token"));
-  }, []);
-
   const fetchData = useCallback(async () => {
-    if (!token) return;
     setLoading(true);
     try {
-      const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
-
       const [perfRes, artistRes, subRes] = await Promise.all([
-        fetch("/api/admin/performances", { headers }),
-        fetch("/api/admin/artists", { headers }),
-        fetch("/api/admin/submissions?status=pending", { headers }),
+        fetch("/api/admin/performances"),
+        fetch("/api/admin/artists"),
+        fetch("/api/admin/submissions?status=pending"),
       ]);
 
       if (perfRes.ok) {
@@ -63,7 +54,7 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     fetchData();

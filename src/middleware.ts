@@ -1,8 +1,23 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import type { Database } from '@/lib/supabase/types'
+import { ADMIN_COOKIE, getAdminPassword } from '@/lib/admin/auth'
 
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  // /admin/* 게이트 — /admin/login 만 비인증 접근 허용
+  if (pathname.startsWith('/admin') && !pathname.startsWith('/admin/login')) {
+    const password = getAdminPassword()
+    const cookieValue = request.cookies.get(ADMIN_COOKIE)?.value
+    if (!password || cookieValue !== password) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/admin/login'
+      url.searchParams.set('from', pathname)
+      return NextResponse.redirect(url)
+    }
+  }
+
   let response = NextResponse.next({ request })
 
   const supabase = createServerClient<Database>(

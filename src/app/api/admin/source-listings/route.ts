@@ -1,12 +1,9 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 
-function verifyAdmin(request: Request): boolean {
-  const authHeader = request.headers.get("authorization");
-  return authHeader === `Bearer ${process.env.CRON_SECRET}`;
-}
+import { verifyAdminRequest as verifyAdmin } from "@/lib/admin/auth";
 
-const VALID_SOURCES = ["yes24", "interpark", "melon"] as const;
+const VALID_SOURCES = ["yes24", "interpark", "melon", "ticketlink", "other"] as const;
 
 export async function POST(request: Request) {
   if (!verifyAdmin(request)) {

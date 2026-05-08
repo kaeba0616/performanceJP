@@ -5,10 +5,7 @@ import { matchArtist, hasJapaneseCharacters, type ArtistKeyword } from "@/lib/cr
 import { parseKoreanDate } from "@/lib/crawlers/base";
 import artistKeywords from "@/lib/artists-keywords.json";
 
-function verifyAdmin(request: Request): boolean {
-  const authHeader = request.headers.get("authorization");
-  return authHeader === `Bearer ${process.env.CRON_SECRET}`;
-}
+import { verifyAdminRequest as verifyAdmin } from "@/lib/admin/auth";
 
 interface SearchResult {
   sourceId: string;

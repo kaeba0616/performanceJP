@@ -28,8 +28,6 @@ export default function EditPerformancePage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
-
-  const [token, setToken] = useState<string | null>(null);
   const [artists, setArtists] = useState<ArtistOption[]>([]);
   const [existingLinks, setExistingLinks] = useState<SourceListing[]>([]);
   const [newLinks, setNewLinks] = useState<NewSourceLink[]>([]);
@@ -49,16 +47,10 @@ export default function EditPerformancePage() {
   const [priceInfo, setPriceInfo] = useState("");
   const [status, setStatus] = useState("upcoming");
   const [setlist, setSetlist] = useState<Song[]>([]);
-
-  useEffect(() => {
-    setToken(localStorage.getItem("admin_token"));
-  }, []);
-
   const fetchData = useCallback(async () => {
-    if (!token) return;
     setLoading(true);
     try {
-      const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+      const headers = { "Content-Type": "application/json" };
 
       const [perfRes, artistRes] = await Promise.all([
         fetch(`/api/performances/${id}`),
@@ -92,7 +84,7 @@ export default function EditPerformancePage() {
     } finally {
       setLoading(false);
     }
-  }, [token, id]);
+  }, [id]);
 
   useEffect(() => {
     fetchData();
@@ -115,7 +107,7 @@ export default function EditPerformancePage() {
     try {
       const res = await fetch(`/api/admin/source-listings/${linkId}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       });
       if (res.ok) {
         setExistingLinks((prev) => prev.filter((l) => l.id !== linkId));
@@ -138,7 +130,7 @@ export default function EditPerformancePage() {
     setError("");
 
     try {
-      const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+      const headers = { "Content-Type": "application/json" };
 
       const cleanedSetlist = setlist
         .map((s) => ({
@@ -173,19 +165,51 @@ export default function EditPerformancePage() {
         return;
       }
 
-      // Create new source listings
-      for (const link of newLinks) {
-        if (!link.source_url.trim()) continue;
-        await fetch("/api/admin/source-listings", {
-          method: "POST",
-          headers,
-          body: JSON.stringify({
-            performance_id: id,
-            source: link.source,
-            source_url: link.source_url.trim(),
-            raw_title: link.raw_title.trim() || title.trim(),
-          }),
-        });
+      // 새 티켓 링크들을 병렬로 생성하면서 실패 행은 폼에 남김
+      const linkResults = await Promise.all(
+        newLinks
+          .filter((l) => l.source_url.trim())
+          .map(async (link) => {
+            try {
+              const res = await fetch("/api/admin/source-listings", {
+                method: "POST",
+                headers,
+                body: JSON.stringify({
+                  performance_id: id,
+                  source: link.source,
+                  source_url: link.source_url.trim(),
+                  raw_title: link.raw_title.trim() || title.trim(),
+                }),
+              });
+              if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                return {
+                  ok: false as const,
+                  link,
+                  message: err.error || `HTTP ${res.status}`,
+                };
+              }
+              return { ok: true as const, link };
+            } catch {
+              return { ok: false as const, link, message: "네트워크 오류" };
+            }
+          })
+      );
+
+      const failed = linkResults.filter((r) => !r.ok);
+      if (failed.length > 0) {
+        const summary = failed
+          .map((f) => `• ${f.link.source} ${f.link.source_url}: ${f.message}`)
+          .join("\n");
+        setError(
+          `공연 정보는 저장됐지만 ${failed.length}개 링크 추가 실패:\n${summary}`
+        );
+        // 실패한 링크만 폼에 남기고 사용자가 수정 후 다시 시도
+        setNewLinks(failed.map((f) => f.link));
+        // 성공한 링크는 existingLinks 다시 로드
+        await fetchData();
+        setSubmitting(false);
+        return;
       }
 
       router.push("/admin/performances");
@@ -204,7 +228,13 @@ export default function EditPerformancePage() {
     return <div className="text-[#424754]">로딩 중...</div>;
   }
 
-  const sourceLabel: Record<string, string> = { yes24: "YES24", interpark: "인터파크", melon: "멜론티켓" };
+  const sourceLabel: Record<string, string> = {
+    yes24: "YES24",
+    interpark: "인터파크",
+    melon: "멜론티켓",
+    ticketlink: "티켓링크",
+    other: "기타",
+  };
 
   return (
     <div className="max-w-2xl">
@@ -368,6 +398,8 @@ export default function EditPerformancePage() {
                           <option value="yes24">YES24</option>
                           <option value="interpark">인터파크</option>
                           <option value="melon">멜론티켓</option>
+                          <option value="ticketlink">티켓링크</option>
+                          <option value="other">기타</option>
                         </select>
                       </div>
                       <div className="col-span-2">
@@ -407,7 +439,9 @@ export default function EditPerformancePage() {
           )}
         </div>
 
-        {error && <p className="text-sm text-[#da3437]">{error}</p>}
+        {error && (
+          <p className="text-sm text-[#da3437] whitespace-pre-line">{error}</p>
+        )}
 
         <div className="flex gap-3">
           <button
