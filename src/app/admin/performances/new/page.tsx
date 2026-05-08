@@ -23,6 +23,12 @@ export default function NewPerformancePage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
+  // Inline new-artist form
+  const [showNewArtist, setShowNewArtist] = useState(false);
+  const [creatingArtist, setCreatingArtist] = useState(false);
+  const [newArtistError, setNewArtistError] = useState("");
+  const [newArtist, setNewArtist] = useState({ name_ko: "", name_en: "", name_ja: "" });
+
   // Form state
   const [artistId, setArtistId] = useState("");
   const [title, setTitle] = useState("");
@@ -58,6 +64,41 @@ export default function NewPerformancePage() {
 
   function addSourceLink() {
     setSourceLinks((prev) => [...prev, { source: "yes24", source_url: "", raw_title: title }]);
+  }
+
+  async function handleCreateArtist() {
+    const ko = newArtist.name_ko.trim();
+    if (!ko) {
+      setNewArtistError("한국어 이름은 필수입니다.");
+      return;
+    }
+    setCreatingArtist(true);
+    setNewArtistError("");
+    try {
+      const res = await fetch("/api/admin/artists", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name_ko: ko,
+          name_en: newArtist.name_en.trim() || null,
+          name_ja: newArtist.name_ja.trim() || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setNewArtistError(data.error || "아티스트 추가 실패");
+        return;
+      }
+      const created = data.artist as ArtistOption;
+      setArtists((prev) => [...prev, created].sort((a, b) => a.name_ko.localeCompare(b.name_ko)));
+      setArtistId(created.id);
+      setNewArtist({ name_ko: "", name_en: "", name_ja: "" });
+      setShowNewArtist(false);
+    } catch {
+      setNewArtistError("네트워크 오류");
+    } finally {
+      setCreatingArtist(false);
+    }
   }
 
   function updateSourceLink(index: number, field: keyof SourceLinkRow, value: string) {
@@ -182,8 +223,25 @@ export default function NewPerformancePage() {
         <div className="bg-white rounded-lg shadow-sm border border-[#e5e7eb] p-6 space-y-4">
           {/* Artist */}
           <div>
-            <label className={labelClass}>아티스트</label>
-            <select value={artistId} onChange={(e) => setArtistId(e.target.value)} className={inputClass}>
+            <div className="flex items-center justify-between mb-1">
+              <label className={labelClass + " mb-0"}>아티스트</label>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowNewArtist((v) => !v);
+                  setNewArtistError("");
+                }}
+                className="text-xs font-medium text-[#0058be] hover:text-[#004a9e]"
+              >
+                {showNewArtist ? "취소" : "+ 새 아티스트"}
+              </button>
+            </div>
+            <select
+              value={artistId}
+              onChange={(e) => setArtistId(e.target.value)}
+              className={inputClass}
+              disabled={showNewArtist}
+            >
               <option value="">선택 안함</option>
               {artists.map((a) => (
                 <option key={a.id} value={a.id}>
@@ -191,6 +249,70 @@ export default function NewPerformancePage() {
                 </option>
               ))}
             </select>
+
+            {showNewArtist && (
+              <div className="mt-3 p-3 bg-[#f9fafb] rounded-lg border border-[#e5e7eb] space-y-2">
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <label className="block text-xs text-[#424754] mb-0.5">
+                      한국어 <span className="text-[#da3437]">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={newArtist.name_ko}
+                      onChange={(e) => setNewArtist((f) => ({ ...f, name_ko: e.target.value }))}
+                      className={inputClass}
+                      placeholder="요아소비"
+                      autoFocus
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-[#424754] mb-0.5">English</label>
+                    <input
+                      type="text"
+                      value={newArtist.name_en}
+                      onChange={(e) => setNewArtist((f) => ({ ...f, name_en: e.target.value }))}
+                      className={inputClass}
+                      placeholder="YOASOBI"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-[#424754] mb-0.5">日本語</label>
+                    <input
+                      type="text"
+                      value={newArtist.name_ja}
+                      onChange={(e) => setNewArtist((f) => ({ ...f, name_ja: e.target.value }))}
+                      className={inputClass}
+                      placeholder="ヨアソビ"
+                    />
+                  </div>
+                </div>
+                {newArtistError && (
+                  <p className="text-xs text-[#da3437]">{newArtistError}</p>
+                )}
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleCreateArtist}
+                    disabled={creatingArtist}
+                    className="bg-[#0058be] text-white rounded-lg px-3 py-1.5 text-xs font-medium hover:bg-[#004a9e] transition-colors disabled:opacity-60"
+                  >
+                    {creatingArtist ? "추가 중..." : "아티스트 추가하고 선택"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowNewArtist(false);
+                      setNewArtist({ name_ko: "", name_en: "", name_ja: "" });
+                      setNewArtistError("");
+                    }}
+                    className="bg-white text-[#424754] border border-[#d1d5db] rounded-lg px-3 py-1.5 text-xs font-medium hover:bg-[#f9fafb] transition-colors"
+                  >
+                    취소
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Title */}
