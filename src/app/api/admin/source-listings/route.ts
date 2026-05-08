@@ -3,7 +3,7 @@ import { createServiceClient } from "@/lib/supabase/server";
 
 import { verifyAdminRequest as verifyAdmin } from "@/lib/admin/auth";
 
-const VALID_SOURCES = ["yes24", "interpark", "melon"] as const;
+const VALID_SOURCES = ["yes24", "interpark", "melon", "ticketlink", "other"] as const;
 
 export async function POST(request: Request) {
   if (!verifyAdmin(request)) {
