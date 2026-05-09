@@ -60,6 +60,7 @@ export interface Database {
         Row: {
           id: string
           artist_id: string | null
+          type: 'solo' | 'festival'
           title: string
           venue: string | null
           city: string | null
@@ -77,6 +78,7 @@ export interface Database {
         Insert: {
           id?: string
           artist_id?: string | null
+          type?: 'solo' | 'festival'
           title: string
           venue?: string | null
           city?: string | null
@@ -94,6 +96,7 @@ export interface Database {
         Update: {
           id?: string
           artist_id?: string | null
+          type?: 'solo' | 'festival'
           title?: string
           venue?: string | null
           city?: string | null
@@ -111,6 +114,42 @@ export interface Database {
         Relationships: [
           {
             foreignKeyName: "performances_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artists"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      performance_artists: {
+        Row: {
+          performance_id: string
+          artist_id: string
+          display_order: number
+          created_at: string
+        }
+        Insert: {
+          performance_id: string
+          artist_id: string
+          display_order?: number
+          created_at?: string
+        }
+        Update: {
+          performance_id?: string
+          artist_id?: string
+          display_order?: number
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "performance_artists_performance_id_fkey"
+            columns: ["performance_id"]
+            isOneToOne: false
+            referencedRelation: "performances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "performance_artists_artist_id_fkey"
             columns: ["artist_id"]
             isOneToOne: false
             referencedRelation: "artists"

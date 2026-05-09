@@ -65,9 +65,12 @@ export interface Artist {
   created_at: string;
 }
 
+export type PerformanceType = "solo" | "festival";
+
 export interface Performance {
   id: string;
   artist_id: string | null;
+  type: PerformanceType;
   title: string;
   venue: string | null;
   city: string | null;
@@ -82,6 +85,13 @@ export interface Performance {
   created_at: string;
   updated_at: string;
   artist?: Artist | null;
+}
+
+// 라인업 한 줄 (junction + artist 조인 결과)
+export interface PerformanceArtist {
+  artist_id: string;
+  display_order: number;
+  artist: Artist;
 }
 
 export interface SourceListing {
@@ -101,6 +111,7 @@ export interface SourceListing {
 export interface PerformanceWithDetails extends Performance {
   artist: Artist | null;
   source_listings: SourceListing[];
+  performance_artists?: PerformanceArtist[];
 }
 
 export type SubmissionStatus = "pending" | "approved" | "rejected";
