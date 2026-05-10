@@ -53,7 +53,7 @@ export default async function MyStampsPage() {
   const { data: rawStamps } = await supabase
     .from("user_attendances")
     .select(
-      "attended_at, performance:performances(id, title, venue, start_date, image_url, artist:artists(id, name_ko, name_en, image_url))"
+      "attended_at, performance:performances(id, title, venue, start_date, image_url, artist:artists!performances_artist_id_fkey(id, name_ko, name_en, image_url))"
     )
     .eq("user_id", user.id)
     .order("attended_at", { ascending: false });

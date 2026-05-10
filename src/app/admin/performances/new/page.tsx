@@ -30,7 +30,11 @@ export default function NewPerformancePage() {
   const [newArtist, setNewArtist] = useState({ name_ko: "", name_en: "", name_ja: "" });
 
   // Form state
+  const [perfType, setPerfType] = useState<"solo" | "festival">("solo");
   const [artistId, setArtistId] = useState("");
+  const [lineup, setLineup] = useState<string[]>([]); // 페스티벌 라인업 (artist_id 순서대로)
+  const [primaryArtistId, setPrimaryArtistId] = useState<string>(""); // 페스티벌 대표 아티스트 (없음=빈값)
+  const [pickArtistId, setPickArtistId] = useState(""); // 라인업 추가용 임시 select 값
   const [title, setTitle] = useState("");
   const [venue, setVenue] = useState("");
   const [city, setCity] = useState("서울");
@@ -91,7 +95,12 @@ export default function NewPerformancePage() {
       }
       const created = data.artist as ArtistOption;
       setArtists((prev) => [...prev, created].sort((a, b) => a.name_ko.localeCompare(b.name_ko)));
-      setArtistId(created.id);
+      // 모드에 따라 자동 반영
+      if (perfType === "solo") {
+        setArtistId(created.id);
+      } else {
+        setLineup((prev) => (prev.includes(created.id) ? prev : [...prev, created.id]));
+      }
       setNewArtist({ name_ko: "", name_en: "", name_ja: "" });
       setShowNewArtist(false);
     } catch {
@@ -99,6 +108,33 @@ export default function NewPerformancePage() {
     } finally {
       setCreatingArtist(false);
     }
+  }
+
+  function addToLineup(id: string) {
+    if (!id) return;
+    setLineup((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    setPickArtistId("");
+  }
+
+  function removeFromLineup(id: string) {
+    setLineup((prev) => prev.filter((x) => x !== id));
+    if (primaryArtistId === id) setPrimaryArtistId("");
+  }
+
+  function moveLineup(idx: number, delta: number) {
+    setLineup((prev) => {
+      const next = [...prev];
+      const target = idx + delta;
+      if (target < 0 || target >= next.length) return prev;
+      [next[idx], next[target]] = [next[target], next[idx]];
+      return next;
+    });
+  }
+
+  function artistLabel(id: string): string {
+    const a = artists.find((x) => x.id === id);
+    if (!a) return id;
+    return `${a.name_ko}${a.name_en ? ` (${a.name_en})` : ""}`;
   }
 
   function updateSourceLink(index: number, field: keyof SourceLinkRow, value: string) {
@@ -116,6 +152,16 @@ export default function NewPerformancePage() {
       return;
     }
 
+    // 모드별 검증
+    if (perfType === "solo" && !artistId) {
+      setError("단독 공연은 아티스트를 선택해주세요.");
+      return;
+    }
+    if (perfType === "festival" && lineup.length === 0) {
+      setError("페스티벌은 라인업에 1명 이상의 아티스트를 추가해주세요.");
+      return;
+    }
+
     setSubmitting(true);
     setError("");
 
@@ -129,12 +175,19 @@ export default function NewPerformancePage() {
         }))
         .filter((s) => s.title.length > 0);
 
+      const payloadArtistId =
+        perfType === "solo" ? artistId : primaryArtistId || null;
+      const payloadLineup =
+        perfType === "solo" ? [artistId] : lineup;
+
       // Create performance
       const perfRes = await fetch("/api/admin/performances", {
         method: "POST",
         headers,
         body: JSON.stringify({
-          artist_id: artistId || null,
+          type: perfType,
+          artist_id: payloadArtistId,
+          lineup: payloadLineup,
           title: title.trim(),
           venue: venue.trim() || null,
           city: city.trim() || null,
@@ -221,10 +274,45 @@ export default function NewPerformancePage() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="bg-white rounded-lg shadow-sm border border-[#e5e7eb] p-6 space-y-4">
-          {/* Artist */}
+          {/* 공연 종류 */}
+          <div>
+            <label className={labelClass}>공연 종류</label>
+            <div className="flex gap-3">
+              <label className={`flex-1 cursor-pointer rounded-lg border px-3 py-2 text-sm ${perfType === "solo" ? "border-[#0058be] bg-[#0058be]/5 text-[#0058be] font-medium" : "border-[#d1d5db] text-[#424754]"}`}>
+                <input
+                  type="radio"
+                  name="perfType"
+                  value="solo"
+                  checked={perfType === "solo"}
+                  onChange={() => setPerfType("solo")}
+                  className="mr-2"
+                />
+                단독 공연 (1명)
+              </label>
+              <label className={`flex-1 cursor-pointer rounded-lg border px-3 py-2 text-sm ${perfType === "festival" ? "border-[#0058be] bg-[#0058be]/5 text-[#0058be] font-medium" : "border-[#d1d5db] text-[#424754]"}`}>
+                <input
+                  type="radio"
+                  name="perfType"
+                  value="festival"
+                  checked={perfType === "festival"}
+                  onChange={() => setPerfType("festival")}
+                  className="mr-2"
+                />
+                페스티벌 (다수)
+              </label>
+            </div>
+          </div>
+
+          {/* Artist (solo) / Lineup (festival) */}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className={labelClass + " mb-0"}>아티스트</label>
+              <label className={labelClass + " mb-0"}>
+                {perfType === "solo" ? (
+                  <>아티스트 <span className="text-[#da3437]">*</span></>
+                ) : (
+                  <>라인업 <span className="text-[#da3437]">*</span></>
+                )}
+              </label>
               <button
                 type="button"
                 onClick={() => {
@@ -236,20 +324,109 @@ export default function NewPerformancePage() {
                 {showNewArtist ? "취소" : "+ 새 아티스트"}
               </button>
             </div>
-            <select
-              value={artistId}
-              onChange={(e) => setArtistId(e.target.value)}
-              className={inputClass}
-              disabled={showNewArtist}
-            >
-              <option value="">선택 안함</option>
-              {artists.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.name_ko}{a.name_en ? ` (${a.name_en})` : ""}
-                </option>
-              ))}
-            </select>
 
+            {/* solo: 단일 select */}
+            {perfType === "solo" && (
+              <select
+                value={artistId}
+                onChange={(e) => setArtistId(e.target.value)}
+                className={inputClass}
+              >
+                <option value="">선택하세요</option>
+                {artists.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name_ko}{a.name_en ? ` (${a.name_en})` : ""}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {/* festival: 라인업 픽커 */}
+            {perfType === "festival" && (
+              <div className="space-y-2">
+                {/* 라인업 목록 */}
+                {lineup.length === 0 ? (
+                  <p className="text-xs text-[#727785] py-1">아직 라인업이 없습니다.</p>
+                ) : (
+                  <ul className="space-y-1.5">
+                    {lineup.map((aid, idx) => (
+                      <li key={aid} className="flex items-center gap-2 bg-[#f9fafb] rounded-lg px-3 py-2 border border-[#e5e7eb]">
+                        <span className="w-5 text-xs text-[#727785] tabular-nums text-right">{idx + 1}</span>
+                        <span className="flex-1 text-sm text-[#131b2e]">{artistLabel(aid)}</span>
+                        <button
+                          type="button"
+                          onClick={() => moveLineup(idx, -1)}
+                          disabled={idx === 0}
+                          className="w-7 h-7 rounded border border-[#d1d5db] text-[#424754] text-xs hover:bg-white disabled:opacity-30"
+                          title="위로"
+                        >↑</button>
+                        <button
+                          type="button"
+                          onClick={() => moveLineup(idx, 1)}
+                          disabled={idx === lineup.length - 1}
+                          className="w-7 h-7 rounded border border-[#d1d5db] text-[#424754] text-xs hover:bg-white disabled:opacity-30"
+                          title="아래로"
+                        >↓</button>
+                        <button
+                          type="button"
+                          onClick={() => removeFromLineup(aid)}
+                          className="w-7 h-7 rounded border border-[#fecaca] text-[#da3437] text-xs hover:bg-[#fef2f2]"
+                          title="제거"
+                        >×</button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {/* 기존 아티스트에서 추가 */}
+                <div className="flex gap-2">
+                  <select
+                    value={pickArtistId}
+                    onChange={(e) => setPickArtistId(e.target.value)}
+                    className={inputClass + " flex-1"}
+                  >
+                    <option value="">기존 아티스트에서 추가</option>
+                    {artists
+                      .filter((a) => !lineup.includes(a.id))
+                      .map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.name_ko}{a.name_en ? ` (${a.name_en})` : ""}
+                        </option>
+                      ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => addToLineup(pickArtistId)}
+                    disabled={!pickArtistId}
+                    className="bg-[#0058be] text-white rounded-lg px-3 py-2 text-xs font-medium hover:bg-[#004a9e] disabled:opacity-50"
+                  >
+                    추가
+                  </button>
+                </div>
+
+                {/* 대표 아티스트 (선택) */}
+                {lineup.length > 1 && (
+                  <div className="pt-2">
+                    <label className="block text-xs text-[#424754] mb-1">
+                      대표 아티스트 (선택) — 카드/리스트에 표시될 헤드라이너
+                    </label>
+                    <select
+                      value={primaryArtistId}
+                      onChange={(e) => setPrimaryArtistId(e.target.value)}
+                      className={inputClass}
+                    >
+                      <option value="">없음 (페스티벌 제목만 표시)</option>
+                      {lineup.map((aid) => (
+                        <option key={aid} value={aid}>
+                          {artistLabel(aid)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 새 아티스트 인라인 폼 (양쪽 모드 공통) */}
             {showNewArtist && (
               <div className="mt-3 p-3 bg-[#f9fafb] rounded-lg border border-[#e5e7eb] space-y-2">
                 <div className="grid grid-cols-3 gap-2">
@@ -297,7 +474,11 @@ export default function NewPerformancePage() {
                     disabled={creatingArtist}
                     className="bg-[#0058be] text-white rounded-lg px-3 py-1.5 text-xs font-medium hover:bg-[#004a9e] transition-colors disabled:opacity-60"
                   >
-                    {creatingArtist ? "추가 중..." : "아티스트 추가하고 선택"}
+                    {creatingArtist
+                      ? "추가 중..."
+                      : perfType === "solo"
+                        ? "아티스트 추가하고 선택"
+                        : "아티스트 추가하고 라인업에 넣기"}
                   </button>
                   <button
                     type="button"

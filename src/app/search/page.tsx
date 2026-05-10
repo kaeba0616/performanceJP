@@ -20,7 +20,7 @@ async function searchArtists(query: string) {
   const artistIds = artists.map((a) => a.id);
   const { data: performances } = await supabase
     .from("performances")
-    .select("*, artist:artists(*), source_listings(*)")
+    .select("*, artist:artists!performances_artist_id_fkey(*), source_listings(*)")
     .in("artist_id", artistIds)
     .order("start_date", { ascending: true });
 

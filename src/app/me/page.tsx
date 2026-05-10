@@ -46,7 +46,7 @@ export default async function MePage() {
   const { data: recent } = await supabase
     .from("user_attendances")
     .select(
-      "attended_at, performance:performances(id, title, start_date, image_url, artist:artists(name_ko))"
+      "attended_at, performance:performances(id, title, start_date, image_url, artist:artists!performances_artist_id_fkey(name_ko))"
     )
     .eq("user_id", user.id)
     .order("attended_at", { ascending: false })

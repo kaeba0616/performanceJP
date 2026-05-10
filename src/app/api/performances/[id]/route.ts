@@ -10,7 +10,9 @@ export async function GET(
 
   const { data, error } = await supabase
     .from("performances")
-    .select("*, artist:artists(*), source_listings(*)")
+    .select(
+      "*, artist:artists!performances_artist_id_fkey(*), source_listings(*), performance_artists(display_order, artist:artists(*))"
+    )
     .eq("id", id)
     .single();
 

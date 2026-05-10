@@ -13,28 +13,28 @@ async function getLandingData() {
   const [ticketOpening, onSale, upcoming, recent] = await Promise.all([
     supabase
       .from("performances")
-      .select("*, artist:artists(*)")
+      .select("*, artist:artists!performances_artist_id_fkey(*)")
       .not("ticket_open_at", "is", null)
       .gt("ticket_open_at", nowIso)
       .order("ticket_open_at", { ascending: true })
       .limit(6),
     supabase
       .from("performances")
-      .select("*, artist:artists(*)")
+      .select("*, artist:artists!performances_artist_id_fkey(*)")
       .eq("status", "on_sale")
       .gte("start_date", todayIso)
       .order("start_date", { ascending: true })
       .limit(6),
     supabase
       .from("performances")
-      .select("*, artist:artists(*)")
+      .select("*, artist:artists!performances_artist_id_fkey(*)")
       .in("status", ["upcoming", "on_sale"])
       .gte("start_date", todayIso)
       .order("start_date", { ascending: true })
       .limit(6),
     supabase
       .from("performances")
-      .select("*, artist:artists(*)")
+      .select("*, artist:artists!performances_artist_id_fkey(*)")
       .order("created_at", { ascending: false })
       .limit(6),
   ]);

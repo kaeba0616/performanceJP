@@ -43,7 +43,7 @@ async function loadOgData(handleParam: string): Promise<OgData | null> {
   const { data: stamps, count } = await supabase
     .from("user_attendances")
     .select(
-      "performance:performances(start_date, artist:artists(id, name_ko, name_en))",
+      "performance:performances(start_date, artist:artists!performances_artist_id_fkey(id, name_ko, name_en))",
       { count: "exact" }
     )
     .eq("user_id", profile.id);
