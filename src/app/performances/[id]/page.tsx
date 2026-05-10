@@ -23,7 +23,9 @@ async function getPerformance(
 
   const { data } = await supabase
     .from("performances")
-    .select("*, artist:artists(*), source_listings(*)")
+    .select(
+      "*, artist:artists!performances_artist_id_fkey(*), source_listings(*), performance_artists(display_order, artist:artists(*))"
+    )
     .eq("id", id)
     .single();
 
@@ -167,6 +169,54 @@ export default async function PerformanceDetailPage({
               </InfoItem>
             )}
           </div>
+
+          {/* Lineup (페스티벌 또는 라인업이 2명 이상인 경우) */}
+          {performance.type === "festival" &&
+            performance.performance_artists &&
+            performance.performance_artists.length > 0 && (
+              <div>
+                <p className="text-xs font-black text-on-surface-variant uppercase tracking-widest mb-4">
+                  라인업
+                </p>
+                <ul className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {[...performance.performance_artists]
+                    .sort((a, b) => a.display_order - b.display_order)
+                    .map((pa) => (
+                      <li key={pa.artist.id}>
+                        <Link
+                          href={`/artists/${pa.artist.id}`}
+                          className="flex items-center gap-3 bg-surface-container-low rounded-xl p-3 hover:bg-surface-container transition-colors"
+                        >
+                          <div className="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden shrink-0">
+                            {pa.artist.image_url ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={pa.artist.image_url}
+                                alt={pa.artist.name_ko}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-xs font-black text-primary/50">
+                                {pa.artist.name_ko.slice(0, 1)}
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-bold text-on-surface truncate">
+                              {pa.artist.name_ko}
+                            </p>
+                            {pa.artist.name_en && (
+                              <p className="text-xs text-on-surface-variant truncate">
+                                {pa.artist.name_en}
+                              </p>
+                            )}
+                          </div>
+                        </Link>
+                      </li>
+                    ))}
+                </ul>
+              </div>
+            )}
 
           {/* Ticket Buttons */}
           <SourceLinks listings={performance.source_listings} size="large" />

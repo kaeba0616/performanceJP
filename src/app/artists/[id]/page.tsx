@@ -16,11 +16,22 @@ async function getArtistWithPerformances(id: string) {
 
   if (!artist) return null;
 
-  const { data: performances } = await supabase
-    .from("performances")
-    .select("*, artist:artists(*)")
-    .eq("artist_id", id)
-    .order("start_date", { ascending: true });
+  // 단독 공연 + 페스티벌 출연 모두 — junction 통해 수집
+  const { data: junctionRows } = await supabase
+    .from("performance_artists")
+    .select("performance_id")
+    .eq("artist_id", id);
+
+  const perfIds = junctionRows?.map((r) => r.performance_id) ?? [];
+
+  const { data: performances } =
+    perfIds.length > 0
+      ? await supabase
+          .from("performances")
+          .select("*, artist:artists!performances_artist_id_fkey(*)")
+          .in("id", perfIds)
+          .order("start_date", { ascending: true })
+      : { data: [] };
 
   return { artist, performances: performances || [] };
 }

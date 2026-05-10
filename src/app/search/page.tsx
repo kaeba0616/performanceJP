@@ -18,17 +18,40 @@ async function searchArtists(query: string) {
   if (!artists || artists.length === 0) return [];
 
   const artistIds = artists.map((a) => a.id);
-  const { data: performances } = await supabase
-    .from("performances")
-    .select("*, artist:artists!performances_artist_id_fkey(*), source_listings(*)")
-    .in("artist_id", artistIds)
-    .order("start_date", { ascending: true });
+
+  // junction 통해 단독 + 페스티벌 출연 모두 수집
+  const { data: junctionRows } = await supabase
+    .from("performance_artists")
+    .select("performance_id, artist_id")
+    .in("artist_id", artistIds);
+
+  const perfIds = Array.from(new Set((junctionRows ?? []).map((r) => r.performance_id)));
+
+  const { data: performances } =
+    perfIds.length > 0
+      ? await supabase
+          .from("performances")
+          .select("*, artist:artists!performances_artist_id_fkey(*), source_listings(*)")
+          .in("id", perfIds)
+          .order("start_date", { ascending: true })
+      : { data: [] };
+
+  const perfsByArtist = new Map<string, string[]>();
+  for (const row of junctionRows ?? []) {
+    const list = perfsByArtist.get(row.artist_id) ?? [];
+    list.push(row.performance_id);
+    perfsByArtist.set(row.artist_id, list);
+  }
+  const perfMap = new Map(
+    ((performances ?? []) as Performance[]).map((p) => [p.id, p])
+  );
 
   return artists.map((artist) => ({
     artist,
-    performances: ((performances || []) as Performance[]).filter(
-      (p) => p.artist_id === artist.id
-    ),
+    performances: (perfsByArtist.get(artist.id) ?? [])
+      .map((pid) => perfMap.get(pid))
+      .filter((p): p is Performance => !!p)
+      .sort((a, b) => a.start_date.localeCompare(b.start_date)),
   }));
 }
 
