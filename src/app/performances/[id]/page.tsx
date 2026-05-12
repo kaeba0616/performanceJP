@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRight, MapPin, CalendarDays, Ticket, Wallet, ArrowRight } from "lucide-react";
+import { ChevronRight, MapPin, CalendarDays, Ticket, Wallet } from "lucide-react";
 import { TicketCountdown } from "@/components/performance/TicketCountdown";
 import { SourceLinks } from "@/components/performance/SourceLinks";
 import { AttendanceButton } from "@/components/performance/AttendanceButton";
@@ -123,18 +123,6 @@ export default async function PerformanceDetailPage({
             <h1 className="editorial-title text-4xl md:text-5xl font-black text-on-surface leading-tight mb-3">
               {performance.title}
             </h1>
-            {performance.artist && (
-              <Link
-                href={`/artists/${performance.artist.id}`}
-                className="inline-flex items-center gap-1.5 text-base font-bold text-primary hover:underline"
-              >
-                {performance.artist.name_en || performance.artist.name_ko}
-                {performance.artist.name_ko &&
-                  performance.artist.name_en &&
-                  ` · ${performance.artist.name_ko}`}
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            )}
           </div>
 
           {/* Info Grid */}
@@ -170,9 +158,8 @@ export default async function PerformanceDetailPage({
             )}
           </div>
 
-          {/* Lineup (페스티벌 또는 라인업이 2명 이상인 경우) */}
-          {performance.type === "festival" &&
-            performance.performance_artists &&
+          {/* Lineup */}
+          {performance.performance_artists &&
             performance.performance_artists.length > 0 && (
               <div>
                 <p className="text-xs font-black text-on-surface-variant uppercase tracking-widest mb-4">
@@ -242,39 +229,6 @@ export default async function PerformanceDetailPage({
 
           {performance.ticket_open_at && (
             <TicketCountdown ticketOpenAt={performance.ticket_open_at} />
-          )}
-
-          {performance.artist && (
-            <Link
-              href={`/artists/${performance.artist.id}`}
-              className="block bg-surface-container-lowest rounded-3xl p-6 hover:bg-primary-fixed group transition-colors"
-            >
-              <p className="text-xs font-black text-on-surface-variant uppercase tracking-widest mb-4">
-                Artist
-              </p>
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-full bg-primary-fixed group-hover:bg-on-primary flex items-center justify-center text-xl font-black text-primary shrink-0 overflow-hidden">
-                  {performance.artist.image_url ? (
-                    <img
-                      src={performance.artist.image_url}
-                      alt={performance.artist.name_ko}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    performance.artist.name_ko[0]
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="editorial-title-sm font-black text-on-surface group-hover:text-on-primary-fixed-variant truncate">
-                    {performance.artist.name_en || performance.artist.name_ko}
-                  </p>
-                  <p className="text-sm text-on-surface-variant truncate">
-                    {performance.artist.name_ko}
-                  </p>
-                </div>
-                <ArrowRight className="w-5 h-5 text-on-surface-variant group-hover:text-on-primary-fixed-variant shrink-0" />
-              </div>
-            </Link>
           )}
         </div>
       </div>
