@@ -6,7 +6,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("artists")
-    .select("*, performances(count)")
+    .select("*, performances:performance_artists(count)")
     .order("name_ko");
 
   if (error) {

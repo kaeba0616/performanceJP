@@ -16,7 +16,7 @@ async function getArtists() {
 
   const { data: artists } = await supabase
     .from("artists")
-    .select("*, performances(count)")
+    .select("*, performances:performance_artists(count)")
     .order("name_ko");
 
   return (artists || []).map((a) => ({
