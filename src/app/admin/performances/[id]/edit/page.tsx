@@ -53,6 +53,8 @@ export default function EditPerformancePage() {
   const [city, setCity] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
   const [ticketOpenAt, setTicketOpenAt] = useState("");
   const [presaleOpenAt, setPresaleOpenAt] = useState("");
   const [priceInfo, setPriceInfo] = useState("");
@@ -85,6 +87,9 @@ export default function EditPerformancePage() {
         setCity(perf.city || "");
         setStartDate(perf.start_date || "");
         setEndDate(perf.end_date || "");
+        // time 컬럼은 PostgREST가 "HH:MM:SS"로 반환 → HH:MM으로 트림
+        setStartTime(perf.start_time ? String(perf.start_time).slice(0, 5) : "");
+        setEndTime(perf.end_time ? String(perf.end_time).slice(0, 5) : "");
         setTicketOpenAt(perf.ticket_open_at ? perf.ticket_open_at.slice(0, 16) : "");
         setPresaleOpenAt(perf.presale_open_at ? perf.presale_open_at.slice(0, 16) : "");
         setPriceInfo(perf.price_info || "");
@@ -254,6 +259,8 @@ export default function EditPerformancePage() {
           city: city.trim() || null,
           start_date: startDate,
           end_date: endDate || null,
+          start_time: startTime || null,
+          end_time: endTime || null,
           ticket_open_at: ticketOpenAt || null,
           presale_open_at: presaleOpenAt || null,
           price_info: priceInfo.trim() || null,
@@ -507,17 +514,46 @@ export default function EditPerformancePage() {
             </div>
           </div>
 
-          {/* Dates */}
+          {/* Dates + times */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>
                 시작일 <span className="text-[#da3437]">*</span>
               </label>
-              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={inputClass} required />
+              <div className="flex gap-2">
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className={inputClass + " flex-1"}
+                  required
+                />
+                <input
+                  type="time"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  className={inputClass + " w-28"}
+                  title="시작 시간 (선택)"
+                />
+              </div>
             </div>
             <div>
               <label className={labelClass}>종료일</label>
-              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className={inputClass} />
+              <div className="flex gap-2">
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className={inputClass + " flex-1"}
+                />
+                <input
+                  type="time"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                  className={inputClass + " w-28"}
+                  title="종료 시간 (선택)"
+                />
+              </div>
             </div>
           </div>
 

@@ -132,22 +132,33 @@ export default async function PerformanceDetailPage({
               icon={<CalendarDays className="w-4 h-4" />}
               label="Concert Date"
             >
-              {showTimes.length > 0 ? (
-                <span className="block space-y-1">
-                  {showTimes.map((s, i) => (
-                    <span key={i} className="block">
-                      {formatShowTime(s.datetime)}
+              {(() => {
+                if (showTimes.length > 0) {
+                  return (
+                    <span className="block space-y-1">
+                      {showTimes.map((s, i) => (
+                        <span key={i} className="block">
+                          {formatShowTime(s.datetime)}
+                        </span>
+                      ))}
                     </span>
-                  ))}
-                </span>
-              ) : (
-                <>
-                  {formatDate(performance.start_date)}
-                  {performance.end_date
-                    ? ` ~ ${formatDate(performance.end_date)}`
-                    : ""}
-                </>
-              )}
+                  );
+                }
+                const startStr = performance.start_time
+                  ? formatShowTime(
+                      `${performance.start_date}T${String(performance.start_time).slice(0, 5)}`
+                    )
+                  : formatDate(performance.start_date);
+                if (!performance.end_date || performance.end_date === performance.start_date) {
+                  return startStr;
+                }
+                const endStr = performance.end_time
+                  ? formatShowTime(
+                      `${performance.end_date}T${String(performance.end_time).slice(0, 5)}`
+                    )
+                  : formatDate(performance.end_date);
+                return `${startStr} ~ ${endStr}`;
+              })()}
             </InfoItem>
             <InfoItem icon={<MapPin className="w-4 h-4" />} label="Venue">
               {performance.venue ? (

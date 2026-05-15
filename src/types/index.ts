@@ -76,6 +76,8 @@ export interface Performance {
   city: string | null;
   start_date: string;
   end_date: string | null;
+  start_time: string | null;
+  end_time: string | null;
   ticket_open_at: string | null;
   presale_open_at: string | null;
   price_info: string | null;

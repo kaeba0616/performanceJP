@@ -11,6 +11,8 @@ const EDITABLE_FIELDS = [
   "city",
   "start_date",
   "end_date",
+  "start_time",
+  "end_time",
   "ticket_open_at",
   "presale_open_at",
   "price_info",
