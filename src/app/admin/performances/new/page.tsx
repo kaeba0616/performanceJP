@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { SongEditor } from "@/components/admin/SongEditor";
-import type { Song } from "@/types";
+import { ShowTimesEditor } from "@/components/admin/ShowTimesEditor";
+import type { ShowTime, Song } from "@/types";
 
 interface ArtistOption {
   id: string;
@@ -45,6 +46,7 @@ export default function NewPerformancePage() {
   const [priceInfo, setPriceInfo] = useState("");
   const [status, setStatus] = useState("upcoming");
   const [imageUrl, setImageUrl] = useState("");
+  const [showTimes, setShowTimes] = useState<ShowTime[]>([]);
   const [setlist, setSetlist] = useState<Song[]>([]);
 
   // Source links
@@ -200,6 +202,9 @@ export default function NewPerformancePage() {
           price_info: priceInfo.trim() || null,
           status,
           image_url: imageUrl.trim() || null,
+          show_times: showTimes
+            .map((s) => ({ datetime: s.datetime.trim() }))
+            .filter((s) => s.datetime.length > 0),
           setlist: cleanedSetlist.length ? cleanedSetlist : null,
         }),
       });
@@ -583,6 +588,12 @@ export default function NewPerformancePage() {
               <option value="sold_out">매진</option>
               <option value="completed">종료</option>
             </select>
+          </div>
+
+          {/* Show times */}
+          <div>
+            <label className={labelClass}>회차 (날짜 + 시작 시간)</label>
+            <ShowTimesEditor value={showTimes} onChange={setShowTimes} />
           </div>
 
           {/* Image URL */}

@@ -5,9 +5,9 @@ import { SourceLinks } from "@/components/performance/SourceLinks";
 import { AttendanceButton } from "@/components/performance/AttendanceButton";
 import { SetlistSection } from "@/components/submission/SetlistSection";
 import { createServiceClient, createServerSupabase } from "@/lib/supabase/server";
-import { formatDate, formatDateTime } from "@/lib/utils/date";
+import { formatDate, formatDateTime, formatShowTime } from "@/lib/utils/date";
 import { isStartedKST } from "@/lib/utils/kst";
-import { normalizeSongs, type PerformanceWithDetails } from "@/types";
+import { normalizeShowTimes, normalizeSongs, type PerformanceWithDetails } from "@/types";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   upcoming: { label: "UPCOMING", className: "status-upcoming" },
@@ -74,6 +74,7 @@ export default async function PerformanceDetailPage({
   const status = statusConfig[performance.status] || statusConfig.upcoming;
   const image = performance.image_url || performance.artist?.image_url || null;
   const setlistSongs = normalizeSongs(performance.setlist);
+  const showTimes = normalizeShowTimes(performance.show_times);
   const canStamp = isStartedKST(performance.start_date);
 
   return (
@@ -131,10 +132,22 @@ export default async function PerformanceDetailPage({
               icon={<CalendarDays className="w-4 h-4" />}
               label="Concert Date"
             >
-              {formatDate(performance.start_date)}
-              {performance.end_date
-                ? ` ~ ${formatDate(performance.end_date)}`
-                : ""}
+              {showTimes.length > 0 ? (
+                <span className="block space-y-1">
+                  {showTimes.map((s, i) => (
+                    <span key={i} className="block">
+                      {formatShowTime(s.datetime)}
+                    </span>
+                  ))}
+                </span>
+              ) : (
+                <>
+                  {formatDate(performance.start_date)}
+                  {performance.end_date
+                    ? ` ~ ${formatDate(performance.end_date)}`
+                    : ""}
+                </>
+              )}
             </InfoItem>
             <InfoItem icon={<MapPin className="w-4 h-4" />} label="Venue">
               {performance.venue ? (

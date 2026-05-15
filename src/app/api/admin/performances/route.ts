@@ -62,6 +62,7 @@ export async function POST(request: Request) {
     status,
     image_url,
     setlist,
+    show_times,
   } = body;
 
   if (!title || !start_date) {
@@ -123,6 +124,7 @@ export async function POST(request: Request) {
       status,
       image_url,
       setlist: (cleanedSetlist.length ? cleanedSetlist : null) as Json | null,
+      show_times: (Array.isArray(show_times) && show_times.length > 0 ? show_times : null) as Json | null,
     })
     .select()
     .single();

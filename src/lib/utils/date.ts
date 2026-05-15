@@ -47,6 +47,30 @@ export function getDDay(dateStr: string): string {
   return `D+${Math.abs(diffDays)}`;
 }
 
+const WEEKDAY_KO = ["일", "월", "화", "수", "목", "금", "토"];
+
+/**
+ * "YYYY-MM-DDTHH:mm" (TZ 없음, KST 로컬로 해석) →
+ * "2026년 5월 16일(토) 오후 6시" 형식.
+ */
+export function formatShowTime(datetime: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(datetime);
+  if (!m) return datetime;
+  const [, y, mo, d, hh, mm] = m;
+  const year = Number(y);
+  const month = Number(mo);
+  const day = Number(d);
+  const hour24 = Number(hh);
+  const minute = Number(mm);
+
+  const dow = WEEKDAY_KO[new Date(year, month - 1, day).getDay()];
+  const isAm = hour24 < 12;
+  const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
+  const ampm = isAm ? "오전" : "오후";
+  const minPart = minute > 0 ? ` ${minute}분` : "";
+  return `${year}년 ${month}월 ${day}일(${dow}) ${ampm} ${hour12}시${minPart}`;
+}
+
 export function getTimeUntil(dateStr: string): string {
   const target = new Date(dateStr).getTime();
   const now = Date.now();

@@ -17,6 +17,7 @@ const EDITABLE_FIELDS = [
   "status",
   "image_url",
   "setlist",
+  "show_times",
 ] as const;
 
 export async function PUT(

@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { SongEditor } from "@/components/admin/SongEditor";
-import { normalizeSongs, type Song } from "@/types";
+import { ShowTimesEditor } from "@/components/admin/ShowTimesEditor";
+import { normalizeShowTimes, normalizeSongs, type ShowTime, type Song } from "@/types";
 
 interface ArtistOption {
   id: string;
@@ -57,6 +58,7 @@ export default function EditPerformancePage() {
   const [priceInfo, setPriceInfo] = useState("");
   const [status, setStatus] = useState("upcoming");
   const [imageUrl, setImageUrl] = useState("");
+  const [showTimes, setShowTimes] = useState<ShowTime[]>([]);
   const [setlist, setSetlist] = useState<Song[]>([]);
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -88,6 +90,7 @@ export default function EditPerformancePage() {
         setPriceInfo(perf.price_info || "");
         setStatus(perf.status || "upcoming");
         setImageUrl(perf.image_url || "");
+        setShowTimes(normalizeShowTimes(perf.show_times));
         setSetlist(normalizeSongs(perf.setlist));
         setExistingLinks(perf.source_listings || []);
       } else {
@@ -256,6 +259,9 @@ export default function EditPerformancePage() {
           price_info: priceInfo.trim() || null,
           status,
           image_url: imageUrl.trim() || null,
+          show_times: showTimes
+            .map((s) => ({ datetime: s.datetime.trim() }))
+            .filter((s) => s.datetime.length > 0),
           setlist: cleanedSetlist.length ? cleanedSetlist : null,
         }),
       });
@@ -542,6 +548,12 @@ export default function EditPerformancePage() {
               <option value="sold_out">매진</option>
               <option value="completed">종료</option>
             </select>
+          </div>
+
+          {/* Show times */}
+          <div>
+            <label className={labelClass}>회차 (날짜 + 시작 시간)</label>
+            <ShowTimesEditor value={showTimes} onChange={setShowTimes} />
           </div>
 
           {/* Image URL */}

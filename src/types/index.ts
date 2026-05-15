@@ -82,9 +82,29 @@ export interface Performance {
   status: string;
   image_url: string | null;
   setlist: unknown;
+  show_times: unknown;
   created_at: string;
   updated_at: string;
   artist?: Artist | null;
+}
+
+export interface ShowTime {
+  datetime: string; // "YYYY-MM-DDTHH:mm" (KST 로컬, TZ 없음)
+}
+
+/** show_times jsonb를 안전하게 정규화. 잘못된 항목은 버림. */
+export function normalizeShowTimes(value: unknown): ShowTime[] {
+  if (!Array.isArray(value)) return [];
+  const out: ShowTime[] = [];
+  for (const item of value) {
+    if (!item || typeof item !== "object") continue;
+    const raw = item as Record<string, unknown>;
+    const dt = typeof raw.datetime === "string" ? raw.datetime.trim() : "";
+    // "YYYY-MM-DDTHH:mm" 형식만 통과
+    if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(dt)) continue;
+    out.push({ datetime: dt.slice(0, 16) });
+  }
+  return out;
 }
 
 // 라인업 한 줄 (junction + artist 조인 결과)

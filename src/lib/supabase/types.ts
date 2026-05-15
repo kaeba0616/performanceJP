@@ -72,6 +72,7 @@ export interface Database {
           status: string
           image_url: string | null
           setlist: Json | null
+          show_times: Json | null
           created_at: string
           updated_at: string
         }
@@ -90,6 +91,7 @@ export interface Database {
           status?: string
           image_url?: string | null
           setlist?: Json | null
+          show_times?: Json | null
           created_at?: string
           updated_at?: string
         }
@@ -108,6 +110,7 @@ export interface Database {
           status?: string
           image_url?: string | null
           setlist?: Json | null
+          show_times?: Json | null
           created_at?: string
           updated_at?: string
         }
