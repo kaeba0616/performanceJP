@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRight, MapPin, CalendarDays, Ticket, Wallet } from "lucide-react";
+import { ChevronRight, MapPin, CalendarDays, Ticket, Wallet, ExternalLink } from "lucide-react";
 import { TicketCountdown } from "@/components/performance/TicketCountdown";
 import { SourceLinks } from "@/components/performance/SourceLinks";
 import { AttendanceButton } from "@/components/performance/AttendanceButton";
@@ -137,8 +137,25 @@ export default async function PerformanceDetailPage({
                 : ""}
             </InfoItem>
             <InfoItem icon={<MapPin className="w-4 h-4" />} label="Venue">
-              {performance.venue || "-"}
-              {performance.city ? `, ${performance.city}` : ""}
+              {performance.venue ? (
+                <a
+                  href={`https://map.naver.com/p/search/${encodeURIComponent(
+                    [performance.venue, performance.city].filter(Boolean).join(" ")
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-baseline gap-1.5 hover:text-primary underline-offset-4 hover:underline transition-colors"
+                  title="네이버 지도에서 검색"
+                >
+                  <span>
+                    {performance.venue}
+                    {performance.city ? `, ${performance.city}` : ""}
+                  </span>
+                  <ExternalLink className="w-3.5 h-3.5 self-center text-on-surface-variant" />
+                </a>
+              ) : (
+                "-"
+              )}
             </InfoItem>
             {performance.ticket_open_at && (
               <InfoItem
