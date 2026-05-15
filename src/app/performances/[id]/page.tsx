@@ -4,6 +4,7 @@ import { TicketCountdown } from "@/components/performance/TicketCountdown";
 import { SourceLinks } from "@/components/performance/SourceLinks";
 import { AttendanceButton } from "@/components/performance/AttendanceButton";
 import { SetlistSection } from "@/components/submission/SetlistSection";
+import { LineupGrid } from "@/components/performance/LineupGrid";
 import { createServiceClient, createServerSupabase } from "@/lib/supabase/server";
 import { formatDate, formatDateTime, formatShowTime } from "@/lib/utils/date";
 import { isStartedKST } from "@/lib/utils/kst";
@@ -94,40 +95,47 @@ export default async function PerformanceDetailPage({
         </span>
       </nav>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-8 lg:gap-12 items-start">
-        {/* Left Column */}
-        <div className="min-w-0 space-y-8">
-          {/* Hero Image */}
-          <div className="relative aspect-[16/10] rounded-3xl overflow-hidden bg-surface-container-high">
-            {image ? (
+      {/* Hero: 포스터(왼쪽) + 제목/일정/장소/가격(오른쪽) */}
+      <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] lg:grid-cols-[360px_1fr] gap-8 lg:gap-10 items-start mb-12">
+        {/* Poster */}
+        <div className="relative aspect-[3/4] rounded-3xl overflow-hidden bg-surface-container-high">
+          {image ? (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={image}
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-60"
+              />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={image}
                 alt={performance.title}
-                className="w-full h-full object-cover"
+                className="relative w-full h-full object-contain"
               />
-            ) : (
-              <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary-container to-primary-fixed-dim flex items-center justify-center">
-                <span className="editorial-title text-5xl md:text-7xl font-black italic text-on-primary/30 tracking-tighter">
-                  THE PULSE
-                </span>
-              </div>
-            )}
-            <span
-              className={`${status.className} absolute top-6 left-6 px-4 py-1.5 rounded-full text-xs font-black tracking-widest uppercase`}
-            >
-              {status.label}
-            </span>
-          </div>
+            </>
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary-container to-primary-fixed-dim flex items-center justify-center">
+              <span className="editorial-title text-5xl md:text-7xl font-black italic text-on-primary/30 tracking-tighter">
+                THE PULSE
+              </span>
+            </div>
+          )}
+          <span
+            className={`${status.className} absolute top-5 left-5 px-4 py-1.5 rounded-full text-xs font-black tracking-widest uppercase z-10`}
+          >
+            {status.label}
+          </span>
+        </div>
 
-          {/* Header */}
-          <div>
-            <h1 className="editorial-title text-4xl md:text-5xl font-black text-on-surface leading-tight mb-3">
-              {performance.title}
-            </h1>
-          </div>
+        {/* Info column */}
+        <div className="min-w-0 space-y-6">
+          <h1 className="editorial-title text-3xl md:text-4xl lg:text-5xl font-black text-on-surface leading-tight">
+            {performance.title}
+          </h1>
 
-          {/* Info Grid */}
-          <div className="bg-surface-container-low rounded-3xl p-6 md:p-8 grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
+          <div className="bg-surface-container-low rounded-3xl p-5 md:p-6 space-y-5">
             <InfoItem
               icon={<CalendarDays className="w-4 h-4" />}
               label="Concert Date"
@@ -199,66 +207,12 @@ export default async function PerformanceDetailPage({
             )}
           </div>
 
-          {/* Lineup */}
-          {performance.performance_artists &&
-            performance.performance_artists.length > 0 && (
-              <div>
-                <p className="text-xs font-black text-on-surface-variant uppercase tracking-widest mb-4">
-                  라인업
-                </p>
-                <ul className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {[...performance.performance_artists]
-                    .sort((a, b) => a.display_order - b.display_order)
-                    .map((pa) => (
-                      <li key={pa.artist.id}>
-                        <Link
-                          href={`/artists/${pa.artist.id}`}
-                          className="flex items-center gap-3 bg-surface-container-low rounded-xl p-3 hover:bg-surface-container transition-colors"
-                        >
-                          <div className="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden shrink-0">
-                            {pa.artist.image_url ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={pa.artist.image_url}
-                                alt={pa.artist.name_ko}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-xs font-black text-primary/50">
-                                {pa.artist.name_ko.slice(0, 1)}
-                              </div>
-                            )}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-bold text-on-surface truncate">
-                              {pa.artist.name_ko}
-                            </p>
-                            {pa.artist.name_en && (
-                              <p className="text-xs text-on-surface-variant truncate">
-                                {pa.artist.name_en}
-                              </p>
-                            )}
-                          </div>
-                        </Link>
-                      </li>
-                    ))}
-                </ul>
-              </div>
-            )}
+          {performance.ticket_open_at && (
+            <TicketCountdown ticketOpenAt={performance.ticket_open_at} />
+          )}
 
-          {/* Ticket Buttons */}
           <SourceLinks listings={performance.source_listings} size="large" />
 
-          {/* Setlist + 비어있을 때만 제보 버튼/폼 */}
-          <SetlistSection
-            performanceId={performance.id}
-            performanceTitle={performance.title}
-            songs={setlistSongs}
-          />
-        </div>
-
-        {/* Right Column */}
-        <div className="lg:sticky lg:top-24 space-y-6">
           {canStamp && (
             <AttendanceButton
               performanceId={performance.id}
@@ -267,11 +221,78 @@ export default async function PerformanceDetailPage({
               pathname={`/performances/${performance.id}`}
             />
           )}
-
-          {performance.ticket_open_at && (
-            <TicketCountdown ticketOpenAt={performance.ticket_open_at} />
-          )}
         </div>
+      </div>
+
+      {/* 아래: 전체 폭 섹션 */}
+      <div className="space-y-10">
+        {/* Lineup */}
+        {performance.performance_artists &&
+          performance.performance_artists.length > 0 && (() => {
+            const sortedPa = [...performance.performance_artists].sort(
+              (a, b) => a.display_order - b.display_order
+            );
+            const anyWithDates = sortedPa.some(
+              (pa) => Array.isArray(pa.show_dates) && pa.show_dates.length > 0
+            );
+
+            if (!anyWithDates) {
+              return (
+                <div>
+                  <p className="text-xs font-black text-on-surface-variant uppercase tracking-widest mb-4">
+                    라인업
+                  </p>
+                  <LineupGrid items={sortedPa.map((pa) => ({ artist: pa.artist }))} />
+                </div>
+              );
+            }
+
+            const byDate = new Map<string, typeof sortedPa>();
+            const allDays: (typeof sortedPa)[number][] = [];
+            for (const pa of sortedPa) {
+              if (Array.isArray(pa.show_dates) && pa.show_dates.length > 0) {
+                for (const d of pa.show_dates) {
+                  const list = byDate.get(d) ?? [];
+                  list.push(pa);
+                  byDate.set(d, list);
+                }
+              } else {
+                allDays.push(pa);
+              }
+            }
+            const dateKeys = [...byDate.keys()].sort();
+
+            return (
+              <div className="space-y-6">
+                <p className="text-xs font-black text-on-surface-variant uppercase tracking-widest">
+                  라인업
+                </p>
+                {dateKeys.map((d) => (
+                  <div key={d}>
+                    <p className="text-sm font-black text-primary mb-3">
+                      {formatDate(d)}
+                    </p>
+                    <LineupGrid items={byDate.get(d)!.map((pa) => ({ artist: pa.artist }))} />
+                  </div>
+                ))}
+                {allDays.length > 0 && (
+                  <div>
+                    <p className="text-sm font-black text-on-surface-variant mb-3">
+                      전체 일자
+                    </p>
+                    <LineupGrid items={allDays.map((pa) => ({ artist: pa.artist }))} />
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+        {/* Setlist + 비어있을 때만 제보 버튼/폼 */}
+        <SetlistSection
+          performanceId={performance.id}
+          performanceTitle={performance.title}
+          songs={setlistSongs}
+        />
       </div>
     </div>
   );

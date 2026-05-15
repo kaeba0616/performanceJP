@@ -51,6 +51,7 @@ export async function POST(request: Request) {
     type: typeRaw,
     artist_id: artistIdRaw,
     lineup: lineupRaw,
+    lineup_dates: lineupDatesRaw,
     title,
     venue,
     city,
@@ -138,10 +139,21 @@ export async function POST(request: Request) {
   }
 
   // junction 동기화
+  const lineupDates =
+    lineupDatesRaw && typeof lineupDatesRaw === "object"
+      ? (lineupDatesRaw as Record<string, unknown>)
+      : {};
+  function pickShowDates(aid: string): string[] | null {
+    const v = lineupDates[aid];
+    if (!Array.isArray(v)) return null;
+    const dates = v.filter((d): d is string => typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d));
+    return dates.length > 0 ? dates : null;
+  }
   const rows = lineupToSave.map((aid, i) => ({
     performance_id: perf.id,
     artist_id: aid,
     display_order: i + 1,
+    show_dates: pickShowDates(aid),
   }));
   const { error: paErr } = await supabase.from("performance_artists").insert(rows);
 

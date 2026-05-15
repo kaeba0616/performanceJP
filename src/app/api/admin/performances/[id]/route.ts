@@ -89,6 +89,20 @@ export async function PUT(
   if (lineup) {
     const finalLineup = data.type === "solo" && data.artist_id ? [data.artist_id] : lineup;
 
+    const lineupDatesRaw = (body as { lineup_dates?: unknown }).lineup_dates;
+    const lineupDates =
+      lineupDatesRaw && typeof lineupDatesRaw === "object"
+        ? (lineupDatesRaw as Record<string, unknown>)
+        : {};
+    function pickShowDates(aid: string): string[] | null {
+      const v = lineupDates[aid];
+      if (!Array.isArray(v)) return null;
+      const dates = v.filter(
+        (d): d is string => typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d)
+      );
+      return dates.length > 0 ? dates : null;
+    }
+
     // 기존 다 지우고 다시 인서트 (간단·안전)
     await supabase.from("performance_artists").delete().eq("performance_id", id);
     if (finalLineup.length > 0) {
@@ -96,6 +110,7 @@ export async function PUT(
         performance_id: id,
         artist_id: aid,
         display_order: i + 1,
+        show_dates: pickShowDates(aid),
       }));
       const { error: paErr } = await supabase.from("performance_artists").insert(rows);
       if (paErr) {

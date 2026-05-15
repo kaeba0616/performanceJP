@@ -171,18 +171,21 @@ export interface Database {
           performance_id: string
           artist_id: string
           display_order: number
+          show_dates: string[] | null
           created_at: string
         }
         Insert: {
           performance_id: string
           artist_id: string
           display_order?: number
+          show_dates?: string[] | null
           created_at?: string
         }
         Update: {
           performance_id?: string
           artist_id?: string
           display_order?: number
+          show_dates?: string[] | null
           created_at?: string
         }
         Relationships: [

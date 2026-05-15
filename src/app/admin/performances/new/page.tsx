@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { SongEditor } from "@/components/admin/SongEditor";
 import { ShowTimesEditor } from "@/components/admin/ShowTimesEditor";
+import { LineupDatePicker, datesBetween } from "@/components/admin/LineupDatePicker";
 import type { ShowTime, Song } from "@/types";
 
 interface ArtistOption {
@@ -34,6 +35,7 @@ export default function NewPerformancePage() {
   const [perfType, setPerfType] = useState<"solo" | "festival">("solo");
   const [artistId, setArtistId] = useState("");
   const [lineup, setLineup] = useState<string[]>([]); // 페스티벌 라인업 (artist_id 순서대로)
+  const [lineupDates, setLineupDates] = useState<Record<string, string[]>>({});
   const [primaryArtistId, setPrimaryArtistId] = useState<string>(""); // 페스티벌 대표 아티스트 (없음=빈값)
   const [pickArtistId, setPickArtistId] = useState(""); // 라인업 추가용 임시 select 값
   const [title, setTitle] = useState("");
@@ -194,6 +196,7 @@ export default function NewPerformancePage() {
           type: perfType,
           artist_id: payloadArtistId,
           lineup: payloadLineup,
+          lineup_dates: lineupDates,
           title: title.trim(),
           venue: venue.trim() || null,
           city: city.trim() || null,
@@ -317,40 +320,39 @@ export default function NewPerformancePage() {
 
           {/* Artist (solo) / Lineup (festival) */}
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className={labelClass + " mb-0"}>
-                {perfType === "solo" ? (
-                  <>아티스트 <span className="text-[#da3437]">*</span></>
-                ) : (
-                  <>라인업 <span className="text-[#da3437]">*</span></>
-                )}
-              </label>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowNewArtist((v) => !v);
-                  setNewArtistError("");
-                }}
-                className="text-xs font-medium text-[#0058be] hover:text-[#004a9e]"
-              >
-                {showNewArtist ? "취소" : "+ 새 아티스트"}
-              </button>
-            </div>
+            <label className={labelClass}>
+              {perfType === "solo" ? (
+                <>아티스트 <span className="text-[#da3437]">*</span></>
+              ) : (
+                <>라인업 <span className="text-[#da3437]">*</span></>
+              )}
+            </label>
 
             {/* solo: 단일 select */}
             {perfType === "solo" && (
-              <select
-                value={artistId}
-                onChange={(e) => setArtistId(e.target.value)}
-                className={inputClass}
-              >
-                <option value="">선택하세요</option>
-                {artists.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.name_ko}{a.name_en ? ` (${a.name_en})` : ""}
-                  </option>
-                ))}
-              </select>
+              <>
+                <select
+                  value={artistId}
+                  onChange={(e) => setArtistId(e.target.value)}
+                  className={inputClass}
+                >
+                  <option value="">선택하세요</option>
+                  {artists.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name_ko}{a.name_en ? ` (${a.name_en})` : ""}
+                    </option>
+                  ))}
+                </select>
+                <div className="text-right mt-1">
+                  <button
+                    type="button"
+                    onClick={() => { setShowNewArtist((v) => !v); setNewArtistError(""); }}
+                    className="text-xs font-medium text-[#0058be] hover:text-[#004a9e]"
+                  >
+                    {showNewArtist ? "취소" : "+ 목록에 없는 아티스트 새로 추가"}
+                  </button>
+                </div>
+              </>
             )}
 
             {/* festival: 라인업 픽커 */}
@@ -361,32 +363,53 @@ export default function NewPerformancePage() {
                   <p className="text-xs text-[#727785] py-1">아직 라인업이 없습니다.</p>
                 ) : (
                   <ul className="space-y-1.5">
-                    {lineup.map((aid, idx) => (
-                      <li key={aid} className="flex items-center gap-2 bg-[#f9fafb] rounded-lg px-3 py-2 border border-[#e5e7eb]">
-                        <span className="w-5 text-xs text-[#727785] tabular-nums text-right">{idx + 1}</span>
-                        <span className="flex-1 text-sm text-[#131b2e]">{artistLabel(aid)}</span>
-                        <button
-                          type="button"
-                          onClick={() => moveLineup(idx, -1)}
-                          disabled={idx === 0}
-                          className="w-7 h-7 rounded border border-[#d1d5db] text-[#424754] text-xs hover:bg-white disabled:opacity-30"
-                          title="위로"
-                        >↑</button>
-                        <button
-                          type="button"
-                          onClick={() => moveLineup(idx, 1)}
-                          disabled={idx === lineup.length - 1}
-                          className="w-7 h-7 rounded border border-[#d1d5db] text-[#424754] text-xs hover:bg-white disabled:opacity-30"
-                          title="아래로"
-                        >↓</button>
-                        <button
-                          type="button"
-                          onClick={() => removeFromLineup(aid)}
-                          className="w-7 h-7 rounded border border-[#fecaca] text-[#da3437] text-xs hover:bg-[#fef2f2]"
-                          title="제거"
-                        >×</button>
-                      </li>
-                    ))}
+                    {lineup.map((aid, idx) => {
+                      const allDates = datesBetween(startDate, endDate);
+                      return (
+                        <li key={aid} className="bg-[#f9fafb] rounded-lg px-3 py-2 border border-[#e5e7eb]">
+                          <div className="flex items-center gap-2">
+                            <span className="w-5 text-xs text-[#727785] tabular-nums text-right">{idx + 1}</span>
+                            <span className="flex-1 text-sm text-[#131b2e]">{artistLabel(aid)}</span>
+                            <button
+                              type="button"
+                              onClick={() => moveLineup(idx, -1)}
+                              disabled={idx === 0}
+                              className="w-7 h-7 rounded border border-[#d1d5db] text-[#424754] text-xs hover:bg-white disabled:opacity-30"
+                              title="위로"
+                            >↑</button>
+                            <button
+                              type="button"
+                              onClick={() => moveLineup(idx, 1)}
+                              disabled={idx === lineup.length - 1}
+                              className="w-7 h-7 rounded border border-[#d1d5db] text-[#424754] text-xs hover:bg-white disabled:opacity-30"
+                              title="아래로"
+                            >↓</button>
+                            <button
+                              type="button"
+                              onClick={() => removeFromLineup(aid)}
+                              className="w-7 h-7 rounded border border-[#fecaca] text-[#da3437] text-xs hover:bg-[#fef2f2]"
+                              title="제거"
+                            >×</button>
+                          </div>
+                          {allDates.length > 1 && (
+                            <div className="mt-1.5 ml-7">
+                              <LineupDatePicker
+                                allDates={allDates}
+                                value={lineupDates[aid] ?? []}
+                                onChange={(next) =>
+                                  setLineupDates((prev) => {
+                                    const copy = { ...prev };
+                                    if (next.length === 0) delete copy[aid];
+                                    else copy[aid] = next;
+                                    return copy;
+                                  })
+                                }
+                              />
+                            </div>
+                          )}
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
                 {/* 기존 아티스트에서 추가 */}
@@ -412,6 +435,15 @@ export default function NewPerformancePage() {
                     className="bg-[#0058be] text-white rounded-lg px-3 py-2 text-xs font-medium hover:bg-[#004a9e] disabled:opacity-50"
                   >
                     추가
+                  </button>
+                </div>
+                <div className="text-right">
+                  <button
+                    type="button"
+                    onClick={() => { setShowNewArtist((v) => !v); setNewArtistError(""); }}
+                    className="text-xs font-medium text-[#0058be] hover:text-[#004a9e]"
+                  >
+                    {showNewArtist ? "취소" : "+ 목록에 없는 아티스트 새로 추가"}
                   </button>
                 </div>
 

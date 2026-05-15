@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { SongEditor } from "@/components/admin/SongEditor";
 import { ShowTimesEditor } from "@/components/admin/ShowTimesEditor";
+import { LineupDatePicker, datesBetween } from "@/components/admin/LineupDatePicker";
 import { normalizeShowTimes, normalizeSongs, type ShowTime, type Song } from "@/types";
 
 interface ArtistOption {
@@ -46,6 +47,7 @@ export default function EditPerformancePage() {
   const [perfType, setPerfType] = useState<"solo" | "festival">("solo");
   const [artistId, setArtistId] = useState("");
   const [lineup, setLineup] = useState<string[]>([]);
+  const [lineupDates, setLineupDates] = useState<Record<string, string[]>>({});
   const [primaryArtistId, setPrimaryArtistId] = useState<string>("");
   const [pickArtistId, setPickArtistId] = useState("");
   const [title, setTitle] = useState("");
@@ -78,10 +80,17 @@ export default function EditPerformancePage() {
         setArtistId(perf.artist_id || "");
         setPrimaryArtistId(perf.artist_id || "");
         // lineup: performance_artists에서 display_order 순으로
-        type PA = { display_order: number; artist: { id: string } };
+        type PA = { display_order: number; show_dates: string[] | null; artist: { id: string } };
         const pa = (perf.performance_artists || []) as PA[];
         const sorted = [...pa].sort((a, b) => a.display_order - b.display_order);
         setLineup(sorted.map((p) => p.artist.id));
+        const dateMap: Record<string, string[]> = {};
+        for (const p of sorted) {
+          if (Array.isArray(p.show_dates) && p.show_dates.length > 0) {
+            dateMap[p.artist.id] = p.show_dates;
+          }
+        }
+        setLineupDates(dateMap);
         setTitle(perf.title || "");
         setVenue(perf.venue || "");
         setCity(perf.city || "");
@@ -254,6 +263,7 @@ export default function EditPerformancePage() {
           type: perfType,
           artist_id: payloadArtistId,
           lineup: payloadLineup,
+          lineup_dates: lineupDates,
           title: title.trim(),
           venue: venue.trim() || null,
           city: city.trim() || null,
@@ -388,35 +398,34 @@ export default function EditPerformancePage() {
 
           {/* Artist (solo) / Lineup (festival) */}
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className={labelClass + " mb-0"}>
-                {perfType === "solo" ? (
-                  <>아티스트 <span className="text-[#da3437]">*</span></>
-                ) : (
-                  <>라인업 <span className="text-[#da3437]">*</span></>
-                )}
-              </label>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowNewArtist((v) => !v);
-                  setNewArtistError("");
-                }}
-                className="text-xs font-medium text-[#0058be] hover:text-[#004a9e]"
-              >
-                {showNewArtist ? "취소" : "+ 새 아티스트"}
-              </button>
-            </div>
+            <label className={labelClass}>
+              {perfType === "solo" ? (
+                <>아티스트 <span className="text-[#da3437]">*</span></>
+              ) : (
+                <>라인업 <span className="text-[#da3437]">*</span></>
+              )}
+            </label>
 
             {perfType === "solo" && (
-              <select value={artistId} onChange={(e) => setArtistId(e.target.value)} className={inputClass}>
-                <option value="">선택하세요</option>
-                {artists.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.name_ko}{a.name_en ? ` (${a.name_en})` : ""}
-                  </option>
-                ))}
-              </select>
+              <>
+                <select value={artistId} onChange={(e) => setArtistId(e.target.value)} className={inputClass}>
+                  <option value="">선택하세요</option>
+                  {artists.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name_ko}{a.name_en ? ` (${a.name_en})` : ""}
+                    </option>
+                  ))}
+                </select>
+                <div className="text-right mt-1">
+                  <button
+                    type="button"
+                    onClick={() => { setShowNewArtist((v) => !v); setNewArtistError(""); }}
+                    className="text-xs font-medium text-[#0058be] hover:text-[#004a9e]"
+                  >
+                    {showNewArtist ? "취소" : "+ 목록에 없는 아티스트 새로 추가"}
+                  </button>
+                </div>
+              </>
             )}
 
             {perfType === "festival" && (
@@ -425,15 +434,36 @@ export default function EditPerformancePage() {
                   <p className="text-xs text-[#727785] py-1">아직 라인업이 없습니다.</p>
                 ) : (
                   <ul className="space-y-1.5">
-                    {lineup.map((aid, idx) => (
-                      <li key={aid} className="flex items-center gap-2 bg-[#f9fafb] rounded-lg px-3 py-2 border border-[#e5e7eb]">
-                        <span className="w-5 text-xs text-[#727785] tabular-nums text-right">{idx + 1}</span>
-                        <span className="flex-1 text-sm text-[#131b2e]">{artistLabel(aid)}</span>
-                        <button type="button" onClick={() => moveLineup(idx, -1)} disabled={idx === 0} className="w-7 h-7 rounded border border-[#d1d5db] text-[#424754] text-xs hover:bg-white disabled:opacity-30" title="위로">↑</button>
-                        <button type="button" onClick={() => moveLineup(idx, 1)} disabled={idx === lineup.length - 1} className="w-7 h-7 rounded border border-[#d1d5db] text-[#424754] text-xs hover:bg-white disabled:opacity-30" title="아래로">↓</button>
-                        <button type="button" onClick={() => removeFromLineup(aid)} className="w-7 h-7 rounded border border-[#fecaca] text-[#da3437] text-xs hover:bg-[#fef2f2]" title="제거">×</button>
-                      </li>
-                    ))}
+                    {lineup.map((aid, idx) => {
+                      const allDates = datesBetween(startDate, endDate);
+                      return (
+                        <li key={aid} className="bg-[#f9fafb] rounded-lg px-3 py-2 border border-[#e5e7eb]">
+                          <div className="flex items-center gap-2">
+                            <span className="w-5 text-xs text-[#727785] tabular-nums text-right">{idx + 1}</span>
+                            <span className="flex-1 text-sm text-[#131b2e]">{artistLabel(aid)}</span>
+                            <button type="button" onClick={() => moveLineup(idx, -1)} disabled={idx === 0} className="w-7 h-7 rounded border border-[#d1d5db] text-[#424754] text-xs hover:bg-white disabled:opacity-30" title="위로">↑</button>
+                            <button type="button" onClick={() => moveLineup(idx, 1)} disabled={idx === lineup.length - 1} className="w-7 h-7 rounded border border-[#d1d5db] text-[#424754] text-xs hover:bg-white disabled:opacity-30" title="아래로">↓</button>
+                            <button type="button" onClick={() => removeFromLineup(aid)} className="w-7 h-7 rounded border border-[#fecaca] text-[#da3437] text-xs hover:bg-[#fef2f2]" title="제거">×</button>
+                          </div>
+                          {allDates.length > 1 && (
+                            <div className="mt-1.5 ml-7">
+                              <LineupDatePicker
+                                allDates={allDates}
+                                value={lineupDates[aid] ?? []}
+                                onChange={(next) =>
+                                  setLineupDates((prev) => {
+                                    const copy = { ...prev };
+                                    if (next.length === 0) delete copy[aid];
+                                    else copy[aid] = next;
+                                    return copy;
+                                  })
+                                }
+                              />
+                            </div>
+                          )}
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
                 <div className="flex gap-2">
@@ -447,6 +477,15 @@ export default function EditPerformancePage() {
                   </select>
                   <button type="button" onClick={() => addToLineup(pickArtistId)} disabled={!pickArtistId} className="bg-[#0058be] text-white rounded-lg px-3 py-2 text-xs font-medium hover:bg-[#004a9e] disabled:opacity-50">
                     추가
+                  </button>
+                </div>
+                <div className="text-right">
+                  <button
+                    type="button"
+                    onClick={() => { setShowNewArtist((v) => !v); setNewArtistError(""); }}
+                    className="text-xs font-medium text-[#0058be] hover:text-[#004a9e]"
+                  >
+                    {showNewArtist ? "취소" : "+ 목록에 없는 아티스트 새로 추가"}
                   </button>
                 </div>
                 {lineup.length > 1 && (

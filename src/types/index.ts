@@ -113,6 +113,7 @@ export function normalizeShowTimes(value: unknown): ShowTime[] {
 export interface PerformanceArtist {
   artist_id: string;
   display_order: number;
+  show_dates: string[] | null;
   artist: Artist;
 }
 
