@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft, Stamp as StampIcon } from "lucide-react";
 import { PerformanceCard } from "@/components/performance/PerformanceCard";
 import { SongList } from "@/components/SongList";
+import { SongSubmitForm } from "@/components/submission/SongSubmitForm";
 import { createServiceClient, createServerSupabase } from "@/lib/supabase/server";
 import { normalizeSongs } from "@/types";
 
@@ -276,11 +277,19 @@ export default async function ArtistDetailPage({
       )}
 
       {/* Hit Songs */}
-      <div className="mb-16">
+      <div className="mb-8">
         <SongList
           songs={hitSongs}
           title="대표곡"
           emptyLabel="아직 등록된 대표곡이 없습니다."
+        />
+      </div>
+
+      <div className="mb-16">
+        <SongSubmitForm
+          kind="hit_songs"
+          artistId={artist.id}
+          targetLabel={artist.name_en || artist.name_ko}
         />
       </div>
 

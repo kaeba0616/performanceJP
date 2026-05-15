@@ -3,7 +3,7 @@ import { ChevronRight, MapPin, CalendarDays, Ticket, Wallet } from "lucide-react
 import { TicketCountdown } from "@/components/performance/TicketCountdown";
 import { SourceLinks } from "@/components/performance/SourceLinks";
 import { AttendanceButton } from "@/components/performance/AttendanceButton";
-import { SongList } from "@/components/SongList";
+import { SetlistSection } from "@/components/submission/SetlistSection";
 import { createServiceClient, createServerSupabase } from "@/lib/supabase/server";
 import { formatDate, formatDateTime } from "@/lib/utils/date";
 import { isStartedKST } from "@/lib/utils/kst";
@@ -208,11 +208,11 @@ export default async function PerformanceDetailPage({
           {/* Ticket Buttons */}
           <SourceLinks listings={performance.source_listings} size="large" />
 
-          {/* Setlist */}
-          <SongList
+          {/* Setlist + 비어있을 때만 제보 버튼/폼 */}
+          <SetlistSection
+            performanceId={performance.id}
+            performanceTitle={performance.title}
             songs={setlistSongs}
-            title="셋리스트"
-            emptyLabel="공연 후 셋리스트가 등록될 예정입니다."
           />
         </div>
 

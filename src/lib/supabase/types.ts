@@ -417,6 +417,72 @@ export interface Database {
           }
         ]
       }
+      song_submissions: {
+        Row: {
+          id: string
+          kind: 'setlist' | 'hit_songs'
+          performance_id: string | null
+          artist_id: string | null
+          submitter_email: string
+          submitter_name: string | null
+          submitter_note: string | null
+          submitter_ip: string | null
+          songs: Json
+          status: string
+          admin_note: string | null
+          rejection_reason: string | null
+          created_at: string
+          reviewed_at: string | null
+        }
+        Insert: {
+          id?: string
+          kind: 'setlist' | 'hit_songs'
+          performance_id?: string | null
+          artist_id?: string | null
+          submitter_email: string
+          submitter_name?: string | null
+          submitter_note?: string | null
+          submitter_ip?: string | null
+          songs: Json
+          status?: string
+          admin_note?: string | null
+          rejection_reason?: string | null
+          created_at?: string
+          reviewed_at?: string | null
+        }
+        Update: {
+          id?: string
+          kind?: 'setlist' | 'hit_songs'
+          performance_id?: string | null
+          artist_id?: string | null
+          submitter_email?: string
+          submitter_name?: string | null
+          submitter_note?: string | null
+          submitter_ip?: string | null
+          songs?: Json
+          status?: string
+          admin_note?: string | null
+          rejection_reason?: string | null
+          created_at?: string
+          reviewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "song_submissions_performance_id_fkey"
+            columns: ["performance_id"]
+            isOneToOne: false
+            referencedRelation: "performances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "song_submissions_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artists"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       notifications_log: {
         Row: {
           id: string
