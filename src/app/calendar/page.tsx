@@ -7,7 +7,7 @@ async function getAllPerformances(): Promise<Performance[]> {
 
   const { data } = await supabase
     .from("performances")
-    .select("*, artist:artists(*)")
+    .select("*, artist:artists!performances_artist_id_fkey(*)")
     .order("start_date", { ascending: true });
 
   return (data as Performance[]) || [];

@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from("performances")
-    .select("*, artist:artists(*)")
+    .select("*, artist:artists!performances_artist_id_fkey(*)")
     .order("start_date", { ascending: true });
 
   if (month) {
