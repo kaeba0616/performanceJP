@@ -27,7 +27,7 @@ export default function NewPerformancePage() {
   const [showNewArtist, setShowNewArtist] = useState(false);
   const [creatingArtist, setCreatingArtist] = useState(false);
   const [newArtistError, setNewArtistError] = useState("");
-  const [newArtist, setNewArtist] = useState({ name_ko: "", name_en: "", name_ja: "" });
+  const [newArtist, setNewArtist] = useState({ name_ko: "", name_en: "", name_ja: "", image_url: "" });
 
   // Form state
   const [perfType, setPerfType] = useState<"solo" | "festival">("solo");
@@ -44,6 +44,7 @@ export default function NewPerformancePage() {
   const [presaleOpenAt, setPresaleOpenAt] = useState("");
   const [priceInfo, setPriceInfo] = useState("");
   const [status, setStatus] = useState("upcoming");
+  const [imageUrl, setImageUrl] = useState("");
   const [setlist, setSetlist] = useState<Song[]>([]);
 
   // Source links
@@ -86,6 +87,7 @@ export default function NewPerformancePage() {
           name_ko: ko,
           name_en: newArtist.name_en.trim() || null,
           name_ja: newArtist.name_ja.trim() || null,
+          image_url: newArtist.image_url.trim() || null,
         }),
       });
       const data = await res.json();
@@ -101,7 +103,7 @@ export default function NewPerformancePage() {
       } else {
         setLineup((prev) => (prev.includes(created.id) ? prev : [...prev, created.id]));
       }
-      setNewArtist({ name_ko: "", name_en: "", name_ja: "" });
+      setNewArtist({ name_ko: "", name_en: "", name_ja: "", image_url: "" });
       setShowNewArtist(false);
     } catch {
       setNewArtistError("네트워크 오류");
@@ -197,6 +199,7 @@ export default function NewPerformancePage() {
           presale_open_at: presaleOpenAt || null,
           price_info: priceInfo.trim() || null,
           status,
+          image_url: imageUrl.trim() || null,
           setlist: cleanedSetlist.length ? cleanedSetlist : null,
         }),
       });
@@ -464,6 +467,29 @@ export default function NewPerformancePage() {
                     />
                   </div>
                 </div>
+                <div>
+                  <label className="block text-xs text-[#424754] mb-0.5">이미지 URL</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="url"
+                      value={newArtist.image_url}
+                      onChange={(e) => setNewArtist((f) => ({ ...f, image_url: e.target.value }))}
+                      className={inputClass}
+                      placeholder="https://..."
+                    />
+                    {newArtist.image_url.trim() && (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={newArtist.image_url.trim()}
+                        alt="미리보기"
+                        className="h-10 w-10 rounded object-cover border border-[#e5e7eb] flex-shrink-0"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).style.display = "none";
+                        }}
+                      />
+                    )}
+                  </div>
+                </div>
                 {newArtistError && (
                   <p className="text-xs text-[#da3437]">{newArtistError}</p>
                 )}
@@ -484,7 +510,7 @@ export default function NewPerformancePage() {
                     type="button"
                     onClick={() => {
                       setShowNewArtist(false);
-                      setNewArtist({ name_ko: "", name_en: "", name_ja: "" });
+                      setNewArtist({ name_ko: "", name_en: "", name_ja: "", image_url: "" });
                       setNewArtistError("");
                     }}
                     className="bg-white text-[#424754] border border-[#d1d5db] rounded-lg px-3 py-1.5 text-xs font-medium hover:bg-[#f9fafb] transition-colors"
@@ -557,6 +583,31 @@ export default function NewPerformancePage() {
               <option value="sold_out">매진</option>
               <option value="completed">종료</option>
             </select>
+          </div>
+
+          {/* Image URL */}
+          <div>
+            <label className={labelClass}>이미지 URL</label>
+            <input
+              type="url"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              className={inputClass}
+              placeholder="https://... (비워두면 아티스트 이미지로 폴백)"
+            />
+            {imageUrl.trim() && (
+              <div className="mt-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={imageUrl.trim()}
+                  alt="미리보기"
+                  className="h-32 w-32 rounded-lg object-cover border border-[#e5e7eb]"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.display = "none";
+                  }}
+                />
+              </div>
+            )}
           </div>
         </div>
 

@@ -24,6 +24,7 @@ export async function PUT(
     youtube_url,
     x_url,
     hit_songs,
+    members,
   } = body;
 
   const cleanedSongs =
@@ -63,6 +64,33 @@ export async function PUT(
 
   if (!data) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  // 멤버 동기화: members 배열이 명시적으로 들어왔을 때만 처리 (undefined면 그대로 유지)
+  if (Array.isArray(members)) {
+    const memberIds = (members as unknown[])
+      .filter((v): v is string => typeof v === "string" && v.length > 0)
+      .filter((mid) => mid !== id);
+
+    const { error: delErr } = await supabase
+      .from("artist_memberships")
+      .delete()
+      .eq("group_id", id);
+    if (delErr) {
+      return NextResponse.json({ error: `멤버 정리 실패: ${delErr.message}` }, { status: 500 });
+    }
+
+    if (memberIds.length > 0) {
+      const rows = memberIds.map((mid, i) => ({
+        group_id: id,
+        member_id: mid,
+        display_order: i + 1,
+      }));
+      const { error: insErr } = await supabase.from("artist_memberships").insert(rows);
+      if (insErr) {
+        return NextResponse.json({ error: `멤버 저장 실패: ${insErr.message}` }, { status: 500 });
+      }
+    }
   }
 
   return NextResponse.json({ success: true, artist: data });

@@ -4,6 +4,18 @@ import { Fragment, useState, useEffect, useCallback } from "react";
 import { SongEditor } from "@/components/admin/SongEditor";
 import { normalizeSongs, type Song } from "@/types";
 
+interface MemberMini {
+  id: string;
+  name_ko: string;
+  name_en: string | null;
+  image_url: string | null;
+}
+
+interface Membership {
+  display_order: number;
+  member: MemberMini;
+}
+
 interface ArtistRow {
   id: string;
   name_ko: string;
@@ -11,8 +23,10 @@ interface ArtistRow {
   name_ja: string | null;
   instagram_url: string | null;
   youtube_url: string | null;
+  image_url: string | null;
   hit_songs: unknown;
   performances: { count: number }[];
+  memberships: Membership[];
 }
 
 interface ArtistForm {
@@ -21,7 +35,9 @@ interface ArtistForm {
   name_ja: string;
   instagram_url: string;
   youtube_url: string;
+  image_url: string;
   hit_songs: Song[];
+  members: string[];
 }
 
 const emptyForm: ArtistForm = {
@@ -30,10 +46,134 @@ const emptyForm: ArtistForm = {
   name_ja: "",
   instagram_url: "",
   youtube_url: "",
+  image_url: "",
   hit_songs: [],
+  members: [],
 };
 
 const headers = { "Content-Type": "application/json" };
+
+function MemberPicker({
+  selfId,
+  allArtists,
+  memberIds,
+  onChange,
+  inputClass,
+}: {
+  selfId: string;
+  allArtists: ArtistRow[];
+  memberIds: string[];
+  onChange: (next: string[]) => void;
+  inputClass: string;
+}) {
+  const [pickId, setPickId] = useState("");
+  const byId = new Map(allArtists.map((a) => [a.id, a]));
+
+  function add(id: string) {
+    if (!id || memberIds.includes(id) || id === selfId) return;
+    onChange([...memberIds, id]);
+    setPickId("");
+  }
+  function remove(id: string) {
+    onChange(memberIds.filter((m) => m !== id));
+  }
+  function move(idx: number, delta: number) {
+    const target = idx + delta;
+    if (target < 0 || target >= memberIds.length) return;
+    const next = [...memberIds];
+    [next[idx], next[target]] = [next[target], next[idx]];
+    onChange(next);
+  }
+
+  const pickable = allArtists.filter((a) => a.id !== selfId && !memberIds.includes(a.id));
+
+  return (
+    <div className="space-y-2">
+      <div className="text-xs font-semibold text-[#424754]">멤버</div>
+      {memberIds.length === 0 ? (
+        <p className="text-xs text-[#727785]">멤버 없음 (개인 아티스트)</p>
+      ) : (
+        <ul className="space-y-1.5">
+          {memberIds.map((mid, idx) => {
+            const a = byId.get(mid);
+            return (
+              <li
+                key={mid}
+                className="flex items-center gap-2 bg-white rounded-lg px-3 py-1.5 border border-[#e5e7eb]"
+              >
+                <span className="w-5 text-xs text-[#727785] tabular-nums text-right">
+                  {idx + 1}
+                </span>
+                {a?.image_url ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={a.image_url}
+                    alt=""
+                    className="h-6 w-6 rounded-full object-cover flex-shrink-0"
+                  />
+                ) : (
+                  <span className="h-6 w-6 rounded-full bg-[#e5e7eb] flex-shrink-0" />
+                )}
+                <span className="flex-1 text-sm text-[#131b2e]">
+                  {a ? `${a.name_ko}${a.name_en ? ` (${a.name_en})` : ""}` : mid}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => move(idx, -1)}
+                  disabled={idx === 0}
+                  className="w-7 h-7 rounded border border-[#d1d5db] text-[#424754] text-xs hover:bg-[#f9fafb] disabled:opacity-30"
+                  title="위로"
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  onClick={() => move(idx, 1)}
+                  disabled={idx === memberIds.length - 1}
+                  className="w-7 h-7 rounded border border-[#d1d5db] text-[#424754] text-xs hover:bg-[#f9fafb] disabled:opacity-30"
+                  title="아래로"
+                >
+                  ↓
+                </button>
+                <button
+                  type="button"
+                  onClick={() => remove(mid)}
+                  className="w-7 h-7 rounded border border-[#fecaca] text-[#da3437] text-xs hover:bg-[#fef2f2]"
+                  title="제거"
+                >
+                  ×
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      <div className="flex gap-2">
+        <select
+          value={pickId}
+          onChange={(e) => setPickId(e.target.value)}
+          className={inputClass + " flex-1"}
+        >
+          <option value="">기존 아티스트에서 추가</option>
+          {pickable.map((a) => (
+            <option key={a.id} value={a.id}>
+              {a.name_ko}
+              {a.name_en ? ` (${a.name_en})` : ""}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          onClick={() => add(pickId)}
+          disabled={!pickId}
+          className="bg-[#0058be] text-white rounded-lg px-3 py-1.5 text-xs font-medium hover:bg-[#004a9e] disabled:opacity-50"
+        >
+          추가
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function AdminArtistsPage() {
   const [artists, setArtists] = useState<ArtistRow[]>([]);
@@ -84,7 +224,9 @@ export default function AdminArtistsPage() {
           name_ko: addForm.name_ko.trim(),
           name_en: addForm.name_en.trim() || null,
           name_ja: addForm.name_ja.trim() || null,
+          image_url: addForm.image_url.trim() || null,
           hit_songs: cleanedSongs.length ? cleanedSongs : null,
+          members: addForm.members,
         }),
       });
       if (res.ok) {
@@ -100,6 +242,7 @@ export default function AdminArtistsPage() {
               name_ja: addForm.name_ja.trim() || null,
               instagram_url: addForm.instagram_url.trim() || null,
               youtube_url: addForm.youtube_url.trim() || null,
+              image_url: addForm.image_url.trim() || null,
               hit_songs: cleanedSongs.length ? cleanedSongs : null,
             }),
           });
@@ -125,7 +268,11 @@ export default function AdminArtistsPage() {
       name_ja: artist.name_ja || "",
       instagram_url: artist.instagram_url || "",
       youtube_url: artist.youtube_url || "",
+      image_url: artist.image_url || "",
       hit_songs: normalizeSongs(artist.hit_songs),
+      members: [...(artist.memberships || [])]
+        .sort((a, b) => a.display_order - b.display_order)
+        .map((m) => m.member.id),
     });
   }
 
@@ -149,7 +296,9 @@ export default function AdminArtistsPage() {
           name_ja: editForm.name_ja.trim() || null,
           instagram_url: editForm.instagram_url.trim() || null,
           youtube_url: editForm.youtube_url.trim() || null,
+          image_url: editForm.image_url.trim() || null,
           hit_songs: cleanedSongs.length ? cleanedSongs : null,
+          members: editForm.members,
         }),
       });
       if (res.ok) {
@@ -252,6 +401,29 @@ export default function AdminArtistsPage() {
               />
             </div>
           </div>
+          <div>
+            <label className="block text-xs text-[#424754] mb-0.5">이미지 URL</label>
+            <div className="flex items-start gap-3">
+              <input
+                type="url"
+                value={addForm.image_url}
+                onChange={(e) => setAddForm((f) => ({ ...f, image_url: e.target.value }))}
+                className={inputClass}
+                placeholder="https://..."
+              />
+              {addForm.image_url.trim() && (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={addForm.image_url.trim()}
+                  alt="미리보기"
+                  className="h-12 w-12 rounded-lg object-cover border border-[#e5e7eb] flex-shrink-0"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.display = "none";
+                  }}
+                />
+              )}
+            </div>
+          </div>
           <SongEditor
             label="대표곡"
             value={addForm.hit_songs}
@@ -337,6 +509,26 @@ export default function AdminArtistsPage() {
                                 className={inputClass}
                                 placeholder="YouTube"
                               />
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="url"
+                                  value={editForm.image_url}
+                                  onChange={(e) => setEditForm((f) => ({ ...f, image_url: e.target.value }))}
+                                  className={inputClass}
+                                  placeholder="Image URL"
+                                />
+                                {editForm.image_url.trim() && (
+                                  /* eslint-disable-next-line @next/next/no-img-element */
+                                  <img
+                                    src={editForm.image_url.trim()}
+                                    alt="미리보기"
+                                    className="h-8 w-8 rounded object-cover border border-[#e5e7eb] flex-shrink-0"
+                                    onError={(e) => {
+                                      (e.currentTarget as HTMLImageElement).style.display = "none";
+                                    }}
+                                  />
+                                )}
+                              </div>
                             </div>
                           </td>
                           <td className="px-4 py-2 text-[#424754] tabular-nums">
@@ -362,7 +554,16 @@ export default function AdminArtistsPage() {
                           </td>
                         </tr>
                         <tr className="bg-[#f0f7ff]">
-                          <td colSpan={7} className="px-4 pb-4 pt-0">
+                          <td colSpan={7} className="px-4 pb-4 pt-0 space-y-4">
+                            <MemberPicker
+                              selfId={artist.id}
+                              allArtists={artists}
+                              memberIds={editForm.members}
+                              onChange={(members) =>
+                                setEditForm((f) => ({ ...f, members }))
+                              }
+                              inputClass={inputClass}
+                            />
                             <SongEditor
                               label="대표곡"
                               value={editForm.hit_songs}

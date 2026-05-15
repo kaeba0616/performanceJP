@@ -121,6 +121,42 @@ export interface Database {
           }
         ]
       }
+      artist_memberships: {
+        Row: {
+          group_id: string
+          member_id: string
+          display_order: number
+          created_at: string
+        }
+        Insert: {
+          group_id: string
+          member_id: string
+          display_order?: number
+          created_at?: string
+        }
+        Update: {
+          group_id?: string
+          member_id?: string
+          display_order?: number
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artist_memberships_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "artists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "artist_memberships_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "artists"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       performance_artists: {
         Row: {
           performance_id: string

@@ -56,6 +56,7 @@ export default function EditPerformancePage() {
   const [presaleOpenAt, setPresaleOpenAt] = useState("");
   const [priceInfo, setPriceInfo] = useState("");
   const [status, setStatus] = useState("upcoming");
+  const [imageUrl, setImageUrl] = useState("");
   const [setlist, setSetlist] = useState<Song[]>([]);
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -86,6 +87,7 @@ export default function EditPerformancePage() {
         setPresaleOpenAt(perf.presale_open_at ? perf.presale_open_at.slice(0, 16) : "");
         setPriceInfo(perf.price_info || "");
         setStatus(perf.status || "upcoming");
+        setImageUrl(perf.image_url || "");
         setSetlist(normalizeSongs(perf.setlist));
         setExistingLinks(perf.source_listings || []);
       } else {
@@ -253,6 +255,7 @@ export default function EditPerformancePage() {
           presale_open_at: presaleOpenAt || null,
           price_info: priceInfo.trim() || null,
           status,
+          image_url: imageUrl.trim() || null,
           setlist: cleanedSetlist.length ? cleanedSetlist : null,
         }),
       });
@@ -539,6 +542,31 @@ export default function EditPerformancePage() {
               <option value="sold_out">매진</option>
               <option value="completed">종료</option>
             </select>
+          </div>
+
+          {/* Image URL */}
+          <div>
+            <label className={labelClass}>이미지 URL</label>
+            <input
+              type="url"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              className={inputClass}
+              placeholder="https://... (비워두면 아티스트 이미지로 폴백)"
+            />
+            {imageUrl.trim() && (
+              <div className="mt-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={imageUrl.trim()}
+                  alt="미리보기"
+                  className="h-32 w-32 rounded-lg object-cover border border-[#e5e7eb]"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.display = "none";
+                  }}
+                />
+              </div>
+            )}
           </div>
         </div>
 

@@ -33,7 +33,31 @@ async function getArtistWithPerformances(id: string) {
           .order("start_date", { ascending: true })
       : { data: [] };
 
-  return { artist, performances: performances || [] };
+  // 이 아티스트가 그룹일 때의 멤버 목록 + 멤버일 때의 소속 그룹 목록
+  const [{ data: memberRows }, { data: groupRows }] = await Promise.all([
+    supabase
+      .from("artist_memberships")
+      .select("display_order, member:artists!artist_memberships_member_id_fkey(id, name_ko, name_en, image_url)")
+      .eq("group_id", id)
+      .order("display_order"),
+    supabase
+      .from("artist_memberships")
+      .select("group:artists!artist_memberships_group_id_fkey(id, name_ko, name_en, image_url)")
+      .eq("member_id", id),
+  ]);
+
+  type MemberMini = { id: string; name_ko: string; name_en: string | null; image_url: string | null };
+  type MemberRow = { display_order: number; member: MemberMini | null };
+  type GroupRow = { group: MemberMini | null };
+
+  const members = ((memberRows ?? []) as MemberRow[])
+    .map((r) => r.member)
+    .filter((m): m is MemberMini => m !== null);
+  const groups = ((groupRows ?? []) as GroupRow[])
+    .map((r) => r.group)
+    .filter((g): g is MemberMini => g !== null);
+
+  return { artist, performances: performances || [], members, groups };
 }
 
 export default async function ArtistDetailPage({
@@ -60,7 +84,7 @@ export default async function ArtistDetailPage({
     );
   }
 
-  const { artist, performances } = data;
+  const { artist, performances, members, groups } = data;
   const hitSongs = normalizeSongs(artist.hit_songs);
   const upcoming = performances.filter(
     (p) => p.status !== "completed"
@@ -175,6 +199,81 @@ export default async function ArtistDetailPage({
           </div>
         </div>
       </div>
+
+      {/* Members (group view) */}
+      {members.length > 0 && (
+        <section className="mb-16">
+          <h2 className="editorial-title text-3xl md:text-4xl font-black text-on-surface mb-8">
+            👥 멤버
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
+            {members.map((m) => (
+              <Link
+                key={m.id}
+                href={`/artists/${m.id}`}
+                className="group flex flex-col"
+              >
+                <div className="relative aspect-square rounded-2xl overflow-hidden bg-surface-container-high mb-3">
+                  {m.image_url ? (
+                    <img
+                      src={m.image_url}
+                      alt={m.name_ko}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary-container to-primary-fixed-dim flex items-center justify-center">
+                      <span className="editorial-title text-5xl font-black italic text-on-primary/50 tracking-tighter">
+                        {m.name_ko[0]}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div className="text-sm font-bold text-on-surface group-hover:text-primary transition-colors truncate">
+                  {m.name_ko}
+                </div>
+                {m.name_en && (
+                  <div className="text-xs text-on-surface-variant truncate">
+                    {m.name_en}
+                  </div>
+                )}
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Groups (member view) */}
+      {groups.length > 0 && (
+        <section className="mb-16">
+          <h2 className="editorial-title text-2xl md:text-3xl font-black text-on-surface mb-6">
+            소속
+          </h2>
+          <div className="flex flex-wrap gap-3">
+            {groups.map((g) => (
+              <Link
+                key={g.id}
+                href={`/artists/${g.id}`}
+                className="inline-flex items-center gap-2 bg-surface-container-low hover:bg-surface-container px-3 py-2 rounded-full transition-colors"
+              >
+                {g.image_url ? (
+                  <img
+                    src={g.image_url}
+                    alt=""
+                    className="h-7 w-7 rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="h-7 w-7 rounded-full bg-primary-container flex items-center justify-center text-xs font-black text-on-primary-container">
+                    {g.name_ko[0]}
+                  </span>
+                )}
+                <span className="text-sm font-bold text-on-surface">
+                  {g.name_ko}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Hit Songs */}
       <div className="mb-16">
