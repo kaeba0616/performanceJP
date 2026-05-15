@@ -12,6 +12,23 @@ export async function GET(request: Request) {
 
   const supabase = createServiceClient();
 
+  // KST 오늘 기준으로 status를 양방향 보정 (cron 없이 admin 목록 진입 시 처리).
+  //   기준일 = COALESCE(end_date, start_date)
+  //   기준일 < 오늘 & status != completed   → completed
+  //   기준일 >= 오늘 & status = completed   → on_sale
+  const kstNow = new Date(Date.now() + 9 * 60 * 60_000);
+  const todayKst = kstNow.toISOString().split("T")[0];
+  await supabase
+    .from("performances")
+    .update({ status: "completed" })
+    .neq("status", "completed")
+    .or(`end_date.lt.${todayKst},and(end_date.is.null,start_date.lt.${todayKst})`);
+  await supabase
+    .from("performances")
+    .update({ status: "on_sale" })
+    .eq("status", "completed")
+    .or(`end_date.gte.${todayKst},and(end_date.is.null,start_date.gte.${todayKst})`);
+
   const { data, error } = await supabase
     .from("performances")
     .select("*, artist:artists!performances_artist_id_fkey(id, name_ko, name_en), source_listings(count)")
