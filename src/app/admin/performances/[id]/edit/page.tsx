@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import { SongEditor } from "@/components/admin/SongEditor";
 import { ShowTimesEditor } from "@/components/admin/ShowTimesEditor";
 import { LineupDatePicker, datesBetween } from "@/components/admin/LineupDatePicker";
+import { ArtistSearchPicker } from "@/components/admin/ArtistSearchPicker";
 import { normalizeShowTimes, normalizeSongs, type ShowTime, type Song } from "@/types";
 import { isoToKstNaive } from "@/lib/utils/date";
 
@@ -50,7 +51,6 @@ export default function EditPerformancePage() {
   const [lineup, setLineup] = useState<string[]>([]);
   const [lineupDates, setLineupDates] = useState<Record<string, string[]>>({});
   const [primaryArtistId, setPrimaryArtistId] = useState<string>("");
-  const [pickArtistId, setPickArtistId] = useState("");
   const [title, setTitle] = useState("");
   const [venue, setVenue] = useState("");
   const [city, setCity] = useState("");
@@ -164,7 +164,6 @@ export default function EditPerformancePage() {
   function addToLineup(id: string) {
     if (!id) return;
     setLineup((prev) => (prev.includes(id) ? prev : [...prev, id]));
-    setPickArtistId("");
   }
 
   function removeFromLineup(id: string) {
@@ -633,14 +632,24 @@ export default function EditPerformancePage() {
 
                 {perfType === "solo" && (
                   <>
-                    <select value={artistId} onChange={(e) => setArtistId(e.target.value)} className={inputClass}>
-                      <option value="">선택하세요</option>
-                      {artists.map((a) => (
-                        <option key={a.id} value={a.id}>
-                          {a.name_ko}{a.name_en ? ` (${a.name_en})` : ""}
-                        </option>
-                      ))}
-                    </select>
+                    {artistId ? (
+                      <div className="flex items-center gap-2 bg-[#f9fafb] rounded-lg px-3 py-2 border border-[#e5e7eb]">
+                        <span className="flex-1 text-sm text-[#131b2e]">{artistLabel(artistId)}</span>
+                        <button
+                          type="button"
+                          onClick={() => setArtistId("")}
+                          className="w-7 h-7 rounded border border-[#fecaca] text-[#da3437] text-xs hover:bg-[#fef2f2]"
+                          title="제거"
+                        >×</button>
+                      </div>
+                    ) : (
+                      <ArtistSearchPicker
+                        artists={artists}
+                        onPick={(a) => setArtistId(a.id)}
+                        placeholder="아티스트 검색"
+                        inputClass={inputClass}
+                      />
+                    )}
                     <div className="text-right mt-1">
                       <button
                         type="button"
@@ -691,19 +700,13 @@ export default function EditPerformancePage() {
                         })}
                       </ul>
                     )}
-                    <div className="flex gap-2">
-                      <select value={pickArtistId} onChange={(e) => setPickArtistId(e.target.value)} className={inputClass + " flex-1"}>
-                        <option value="">기존 아티스트에서 추가</option>
-                        {artists.filter((a) => !lineup.includes(a.id)).map((a) => (
-                          <option key={a.id} value={a.id}>
-                            {a.name_ko}{a.name_en ? ` (${a.name_en})` : ""}
-                          </option>
-                        ))}
-                      </select>
-                      <button type="button" onClick={() => addToLineup(pickArtistId)} disabled={!pickArtistId} className="bg-[#0058be] text-white rounded-lg px-3 py-2 text-xs font-medium hover:bg-[#004a9e] disabled:opacity-50">
-                        추가
-                      </button>
-                    </div>
+                    <ArtistSearchPicker
+                      artists={artists}
+                      excludeIds={lineup}
+                      onPick={(a) => addToLineup(a.id)}
+                      placeholder="아티스트 추가 — 이름으로 검색"
+                      inputClass={inputClass}
+                    />
                     <div className="text-right">
                       <button
                         type="button"

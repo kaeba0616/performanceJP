@@ -2,6 +2,7 @@
 
 import { Fragment, useState, useEffect, useCallback } from "react";
 import { SongEditor } from "@/components/admin/SongEditor";
+import { ArtistSearchPicker } from "@/components/admin/ArtistSearchPicker";
 import { normalizeSongs, type Song } from "@/types";
 
 interface MemberMini {
@@ -66,13 +67,11 @@ function MemberPicker({
   onChange: (next: string[]) => void;
   inputClass: string;
 }) {
-  const [pickId, setPickId] = useState("");
   const byId = new Map(allArtists.map((a) => [a.id, a]));
 
   function add(id: string) {
     if (!id || memberIds.includes(id) || id === selfId) return;
     onChange([...memberIds, id]);
-    setPickId("");
   }
   function remove(id: string) {
     onChange(memberIds.filter((m) => m !== id));
@@ -84,8 +83,6 @@ function MemberPicker({
     [next[idx], next[target]] = [next[target], next[idx]];
     onChange(next);
   }
-
-  const pickable = allArtists.filter((a) => a.id !== selfId && !memberIds.includes(a.id));
 
   return (
     <div className="space-y-2">
@@ -148,29 +145,13 @@ function MemberPicker({
           })}
         </ul>
       )}
-      <div className="flex gap-2">
-        <select
-          value={pickId}
-          onChange={(e) => setPickId(e.target.value)}
-          className={inputClass + " flex-1"}
-        >
-          <option value="">기존 아티스트에서 추가</option>
-          {pickable.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.name_ko}
-              {a.name_en ? ` (${a.name_en})` : ""}
-            </option>
-          ))}
-        </select>
-        <button
-          type="button"
-          onClick={() => add(pickId)}
-          disabled={!pickId}
-          className="bg-[#0058be] text-white rounded-lg px-3 py-1.5 text-xs font-medium hover:bg-[#004a9e] disabled:opacity-50"
-        >
-          추가
-        </button>
-      </div>
+      <ArtistSearchPicker
+        artists={allArtists}
+        excludeIds={[selfId, ...memberIds]}
+        onPick={(a) => add(a.id)}
+        placeholder="멤버 추가 — 이름으로 검색"
+        inputClass={inputClass}
+      />
     </div>
   );
 }
