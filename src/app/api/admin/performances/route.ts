@@ -2,8 +2,14 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import type { Json } from "@/lib/supabase/types";
 import { normalizeSongs } from "@/types";
+import { kstNaiveToISO } from "@/lib/utils/date";
 
 import { verifyAdminRequest as verifyAdmin } from "@/lib/admin/auth";
+
+function normalizeKstTimestamp(v: unknown): string | null {
+  if (typeof v !== "string" || v.length === 0) return null;
+  return kstNaiveToISO(v);
+}
 
 export async function GET(request: Request) {
   if (!verifyAdmin(request)) {
@@ -123,8 +129,8 @@ export async function POST(request: Request) {
       end_date,
       start_time,
       end_time,
-      ticket_open_at,
-      presale_open_at,
+      ticket_open_at: normalizeKstTimestamp(ticket_open_at),
+      presale_open_at: normalizeKstTimestamp(presale_open_at),
       price_info,
       status,
       image_url,

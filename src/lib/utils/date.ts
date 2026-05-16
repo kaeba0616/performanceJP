@@ -11,12 +11,54 @@ export function formatDate(dateStr: string): string {
   return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
 }
 
+const KST_PARTS = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Seoul",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+});
+
+function getKstParts(date: Date) {
+  const out: Record<string, string> = {};
+  for (const p of KST_PARTS.formatToParts(date)) {
+    if (p.type !== "literal") out[p.type] = p.value;
+  }
+  // hour="24" 처리 (en-CA + hour12:false에서 자정이 24로 나올 수 있음)
+  if (out.hour === "24") out.hour = "00";
+  return out as { year: string; month: string; day: string; hour: string; minute: string };
+}
+
+/**
+ * timestamptz를 KST(Asia/Seoul) 기준으로 "YYYY.MM.DD HH:mm" 포맷.
+ * 서버/브라우저 TZ에 영향받지 않도록 항상 KST로 고정 변환.
+ */
 export function formatDateTime(dateStr: string): string {
-  const date = new Date(dateStr);
-  const d = formatDate(dateStr);
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
-  return `${d} ${hours}:${minutes}`;
+  const p = getKstParts(new Date(dateStr));
+  return `${p.year}.${p.month}.${p.day} ${p.hour}:${p.minute}`;
+}
+
+/**
+ * "YYYY-MM-DDTHH:mm" (datetime-local 입력, TZ 없음)을 KST로 해석해
+ * "YYYY-MM-DDTHH:mm:00+09:00" ISO 문자열로 변환.
+ * Postgres timestamptz가 KST 의도대로 저장되도록 명시적 오프셋을 붙인다.
+ */
+export function kstNaiveToISO(naive: string): string {
+  // 이미 TZ 정보가 붙어 있으면 그대로 둠
+  if (/[zZ]|[+-]\d{2}:?\d{2}$/.test(naive)) return naive;
+  // 초가 없으면 :00 채움
+  const withSec = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(naive) ? `${naive}:00` : naive;
+  return `${withSec}+09:00`;
+}
+
+/**
+ * ISO 문자열을 datetime-local 입력용 KST naive("YYYY-MM-DDTHH:mm")로 변환.
+ */
+export function isoToKstNaive(iso: string): string {
+  const p = getKstParts(new Date(iso));
+  return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
 }
 
 export function getMonthName(month: number): string {

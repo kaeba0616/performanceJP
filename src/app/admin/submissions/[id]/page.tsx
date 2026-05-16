@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { isoToKstNaive } from "@/lib/utils/date";
 
 interface ArtistOption {
   id: string;
@@ -100,11 +101,7 @@ export default function AdminSubmissionDetailPage() {
         setCity(s.city || "");
         setStartDate(s.start_date || "");
         setEndDate(s.end_date || "");
-        setTicketOpenAt(
-          s.ticket_open_at
-            ? new Date(s.ticket_open_at).toISOString().slice(0, 16)
-            : ""
-        );
+        setTicketOpenAt(s.ticket_open_at ? isoToKstNaive(s.ticket_open_at) : "");
         setPriceInfo(s.price_info || "");
         setSourceUrl(s.source_url || "");
         setImageUrl(s.image_url || "");

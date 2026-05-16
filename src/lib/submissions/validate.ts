@@ -1,3 +1,5 @@
+import { kstNaiveToISO } from "@/lib/utils/date";
+
 export interface SubmissionInput {
   submitter_email: string;
   submitter_name?: string | null;
@@ -111,8 +113,14 @@ export function validateSubmissionInput(body: unknown): ValidateResult {
     city: toOptStr(raw.city) || "서울",
     start_date,
     end_date,
-    ticket_open_at: toOptStr(raw.ticket_open_at),
-    presale_open_at: toOptStr(raw.presale_open_at),
+    ticket_open_at: (() => {
+      const s = toOptStr(raw.ticket_open_at);
+      return s ? kstNaiveToISO(s) : null;
+    })(),
+    presale_open_at: (() => {
+      const s = toOptStr(raw.presale_open_at);
+      return s ? kstNaiveToISO(s) : null;
+    })(),
     price_info: toOptStr(raw.price_info),
     image_url: toOptStr(raw.image_url),
     source_url: toOptStr(raw.source_url),

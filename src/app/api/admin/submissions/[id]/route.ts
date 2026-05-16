@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/types";
+import { kstNaiveToISO } from "@/lib/utils/date";
 
 import { verifyAdminRequest as verifyAdmin } from "@/lib/admin/auth";
 type SubmissionUpdate = Database["public"]["Tables"]["submissions"]["Update"];
+
+const KST_TIMESTAMP_FIELDS = new Set(["ticket_open_at", "presale_open_at"]);
 
 
 export async function GET(
@@ -62,7 +65,10 @@ export async function PATCH(
   for (const key of EDITABLE_FIELDS) {
     if (key in body) {
       const v = body[key];
-      const normalized = typeof v === "string" && v.trim() === "" ? null : v;
+      let normalized: unknown = typeof v === "string" && v.trim() === "" ? null : v;
+      if (KST_TIMESTAMP_FIELDS.has(key) && typeof normalized === "string") {
+        normalized = kstNaiveToISO(normalized);
+      }
       (update as Record<string, unknown>)[key] = normalized;
     }
   }

@@ -6,6 +6,7 @@ import { SongEditor } from "@/components/admin/SongEditor";
 import { ShowTimesEditor } from "@/components/admin/ShowTimesEditor";
 import { LineupDatePicker, datesBetween } from "@/components/admin/LineupDatePicker";
 import { normalizeShowTimes, normalizeSongs, type ShowTime, type Song } from "@/types";
+import { isoToKstNaive } from "@/lib/utils/date";
 
 interface ArtistOption {
   id: string;
@@ -99,8 +100,8 @@ export default function EditPerformancePage() {
         // time 컬럼은 PostgREST가 "HH:MM:SS"로 반환 → HH:MM으로 트림
         setStartTime(perf.start_time ? String(perf.start_time).slice(0, 5) : "");
         setEndTime(perf.end_time ? String(perf.end_time).slice(0, 5) : "");
-        setTicketOpenAt(perf.ticket_open_at ? perf.ticket_open_at.slice(0, 16) : "");
-        setPresaleOpenAt(perf.presale_open_at ? perf.presale_open_at.slice(0, 16) : "");
+        setTicketOpenAt(perf.ticket_open_at ? isoToKstNaive(perf.ticket_open_at) : "");
+        setPresaleOpenAt(perf.presale_open_at ? isoToKstNaive(perf.presale_open_at) : "");
         setPriceInfo(perf.price_info || "");
         setStatus(perf.status || "upcoming");
         setImageUrl(perf.image_url || "");

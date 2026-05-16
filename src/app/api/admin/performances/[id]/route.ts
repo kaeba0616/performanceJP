@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
+import { kstNaiveToISO } from "@/lib/utils/date";
 
 import { verifyAdminRequest as verifyAdmin } from "@/lib/admin/auth";
+
+const KST_TIMESTAMP_FIELDS = new Set(["ticket_open_at", "presale_open_at"]);
 
 const EDITABLE_FIELDS = [
   "type",
@@ -42,7 +45,14 @@ export async function PUT(
   // 화이트리스트로 update 페이로드 구성
   const update: Record<string, unknown> = {};
   for (const k of EDITABLE_FIELDS) {
-    if (k in body) update[k] = (body as Record<string, unknown>)[k];
+    if (k in body) {
+      const v = (body as Record<string, unknown>)[k];
+      if (KST_TIMESTAMP_FIELDS.has(k)) {
+        update[k] = typeof v === "string" && v.length > 0 ? kstNaiveToISO(v) : null;
+      } else {
+        update[k] = v;
+      }
+    }
   }
 
   // type/lineup 일관성 검증 (lineup 제공된 경우만)
