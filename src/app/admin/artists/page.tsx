@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useState, useEffect, useCallback } from "react";
+import { Fragment, useState, useEffect, useCallback, useMemo } from "react";
 import { SongEditor } from "@/components/admin/SongEditor";
 import { ArtistSearchPicker } from "@/components/admin/ArtistSearchPicker";
 import { normalizeSongs, type Song } from "@/types";
@@ -163,6 +163,18 @@ export default function AdminArtistsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<ArtistForm>({ ...emptyForm });
   const [submitting, setSubmitting] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const filteredArtists = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return artists;
+    return artists.filter((a) => {
+      if (a.name_ko.toLowerCase().includes(q)) return true;
+      if (a.name_en && a.name_en.toLowerCase().includes(q)) return true;
+      if (a.name_ja && a.name_ja.toLowerCase().includes(q)) return true;
+      return false;
+    });
+  }, [artists, search]);
 
   const fetchArtists = useCallback(async () => {
     setLoading(true);
@@ -420,6 +432,22 @@ export default function AdminArtistsPage() {
         </form>
       </div>
 
+      {/* Search */}
+      <div className="mb-3 flex items-center gap-3">
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="아티스트 검색 (한/영/일 이름)"
+          className={inputClass + " max-w-sm"}
+        />
+        {search && (
+          <span className="text-xs text-[#727785]">
+            {filteredArtists.length} / {artists.length}
+          </span>
+        )}
+      </div>
+
       {/* Artist table */}
       {loading ? (
         <div className="text-[#424754]">로딩 중...</div>
@@ -439,14 +467,14 @@ export default function AdminArtistsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#e5e7eb]">
-                {artists.length === 0 ? (
+                {filteredArtists.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-4 py-8 text-center text-[#424754]">
-                      등록된 아티스트가 없습니다.
+                      {search.trim() ? "검색 결과가 없습니다." : "등록된 아티스트가 없습니다."}
                     </td>
                   </tr>
                 ) : (
-                  artists.map((artist) =>
+                  filteredArtists.map((artist) =>
                     editingId === artist.id ? (
                       <Fragment key={artist.id}>
                         <tr className="bg-[#f0f7ff]">
