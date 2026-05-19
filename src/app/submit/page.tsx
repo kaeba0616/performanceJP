@@ -161,6 +161,19 @@ export default function SubmitPage() {
       </div>
 
       <div className="bg-surface-container-lowest rounded-3xl p-6 md:p-8">
+        <div className="mb-6 rounded-2xl bg-primary-fixed/40 p-4 flex items-start gap-3">
+          <span className="shrink-0 mt-0.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-black bg-primary text-on-primary">
+            필수
+          </span>
+          <p className="text-sm text-on-surface-variant font-medium leading-relaxed">
+            <strong className="text-on-surface">이메일</strong>,{" "}
+            <strong className="text-on-surface">아티스트</strong>,{" "}
+            <strong className="text-on-surface">공연 제목</strong>,{" "}
+            <strong className="text-on-surface">시작일</strong>은 꼭 입력해주세요.
+            나머지는 아시는 만큼만 적으셔도 됩니다.
+          </p>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Honeypot */}
           <input
@@ -408,9 +421,13 @@ function Field({
 }) {
   return (
     <div>
-      <label className="block text-xs font-black text-on-surface-variant uppercase tracking-widest mb-2">
-        {label}
-        {required && <span className="text-primary"> *</span>}
+      <label className="flex items-center gap-2 text-xs font-black text-on-surface-variant uppercase tracking-widest mb-2">
+        <span>{label}</span>
+        {required && (
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-black bg-primary text-on-primary tracking-normal normal-case">
+            필수
+          </span>
+        )}
       </label>
       {children}
       {hint && (
