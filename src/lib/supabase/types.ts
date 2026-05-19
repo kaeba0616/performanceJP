@@ -255,6 +255,63 @@ export interface Database {
           }
         ]
       }
+      web_push_subscriptions: {
+        Row: {
+          id: string
+          subscriber_id: string | null
+          endpoint: string
+          p256dh: string
+          auth: string
+          user_agent: string | null
+          created_at: string
+          last_used_at: string
+        }
+        Insert: {
+          id?: string
+          subscriber_id?: string | null
+          endpoint: string
+          p256dh: string
+          auth: string
+          user_agent?: string | null
+          created_at?: string
+          last_used_at?: string
+        }
+        Update: {
+          id?: string
+          subscriber_id?: string | null
+          endpoint?: string
+          p256dh?: string
+          auth?: string
+          user_agent?: string | null
+          created_at?: string
+          last_used_at?: string
+        }
+        Relationships: []
+      }
+      web_push_log: {
+        Row: {
+          id: string
+          web_push_subscription_id: string
+          performance_id: string | null
+          type: string
+          sent_at: string
+        }
+        Insert: {
+          id?: string
+          web_push_subscription_id: string
+          performance_id?: string | null
+          type: string
+          sent_at?: string
+        }
+        Update: {
+          id?: string
+          web_push_subscription_id?: string
+          performance_id?: string | null
+          type?: string
+          sent_at?: string
+        }
+        Relationships: []
+      }
       subscribers: {
         Row: {
           id: string

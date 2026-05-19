@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { BellRing, Check, Mail, Ticket, Sparkles } from "lucide-react";
+import { PushSubscribeButton } from "@/components/pwa/PushSubscribeButton";
 
 export default function SubscribePage() {
   const [email, setEmail] = useState("");
@@ -119,9 +120,20 @@ export default function SubscribePage() {
             className="w-full py-4 rounded-xl text-on-primary font-black text-sm bg-gradient-to-br from-primary to-primary-container hover:brightness-110 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             <BellRing className="w-4 h-4" />
-            {loading ? "처리 중..." : "알림 구독하기"}
+            {loading ? "처리 중..." : "이메일 알림 구독"}
           </button>
         </form>
+
+        <div className="mt-6 pt-6 border-t border-outline-variant/30">
+          <p className="text-xs font-black text-on-surface-variant uppercase tracking-widest mb-3">
+            기기 푸시 알림 (선택)
+          </p>
+          <p className="text-xs text-on-surface-variant mb-3 leading-relaxed">
+            이 기기로 즉시 푸시 알림을 받습니다. 이메일과 별개로 작동하며,
+            앱처럼 홈 화면에 설치한 경우 가장 빠르게 알림이 도착합니다.
+          </p>
+          <PushSubscribeButton email={email || undefined} />
+        </div>
       </div>
     </div>
   );
