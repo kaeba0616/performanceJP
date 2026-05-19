@@ -1,0 +1,55 @@
+{
+  "packageId": "org.ernebi.jpop",
+  "host": "jpop.ernebi.org",
+  "name": "THE PULSE",
+  "launcherName": "THE PULSE",
+  "display": "standalone",
+  "orientation": "default",
+  "themeColor": "#004191",
+  "themeColorDark": "#001a42",
+  "navigationColor": "#004191",
+  "navigationColorDark": "#001a42",
+  "navigationDividerColor": "#004191",
+  "navigationDividerColorDark": "#001a42",
+  "backgroundColor": "#faf8ff",
+  "enableNotifications": true,
+  "startUrl": "/",
+  "iconUrl": "https://jpop.ernebi.org/icons/icon-512.png",
+  "maskableIconUrl": "https://jpop.ernebi.org/icons/icon-maskable-512.png",
+  "monochromeIconUrl": "https://jpop.ernebi.org/icons/icon-maskable-512.png",
+  "shortcuts": [
+    {
+      "name": "오늘의 캘린더",
+      "shortName": "캘린더",
+      "url": "/calendar",
+      "iconUrl": "https://jpop.ernebi.org/icons/icon-192.png"
+    },
+    {
+      "name": "공연 제보",
+      "shortName": "제보",
+      "url": "/submit",
+      "iconUrl": "https://jpop.ernebi.org/icons/icon-192.png"
+    }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://jpop.ernebi.org/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {
+    "locationDelegation": { "enabled": false },
+    "playBilling": { "enabled": false }
+  },
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://jpop.ernebi.org/",
+  "minSdkVersion": 23,
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "android"
+  }
+}

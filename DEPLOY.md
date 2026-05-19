@@ -298,3 +298,96 @@ DB 스키마 변경(새 마이그레이션 추가) 시: Supabase Dashboard → S
 5. `/admin` 진입 후 토큰으로 인증 → 제보 승인 → `/performances/:id` 노출
 6. `pm2 list`에 jpop `online`
 7. 서버 재부팅 후에도 jpop 자동 기동 (`pm2 startup` 적용 확인)
+
+---
+
+## 11. Android 앱(TWA) 배포 — Play Store
+
+이 사이트를 그대로 Google Play 앱으로 패키징하는 절차. **Trusted Web Activity** 방식이라 별도 Android 앱 코드는 없고, 도메인-앱 연결 증명서(`assetlinks.json`)만 잘 호스팅되면 앱 안에서 jpop.ernebi.org가 풀스크린으로 뜬다.
+
+### 11-0. 사전 조건
+- 사이트가 **HTTPS**로 정상 동작 (✓ 이미 jpop.ernebi.org)
+- `/manifest.json`이 200으로 응답 (`curl https://jpop.ernebi.org/manifest.json` 확인)
+- Lighthouse PWA 점수 90+ (Chrome DevTools → Lighthouse → Mobile → PWA)
+- Google Play Console 계정 ($25 일회성, 첫 결제)
+
+### 11-1. Bubblewrap 설치 + 초기화 (로컬에서)
+
+```bash
+# JDK / Android SDK는 bubblewrap이 자동으로 설치한다 (첫 실행 시 ~1.5GB).
+cd /path/to/jpop/android
+npx @bubblewrap/cli@latest init --manifest=https://jpop.ernebi.org/manifest.json
+# 질문에 대부분 엔터 (이미 android/twa-manifest.json에 값 채워둠).
+# Signing key 비밀번호는 새로 만들고 안전하게 보관 (1Password 등).
+# → android.keystore 파일 생성됨. 이 파일은 절대 잃어버리면 안 된다.
+#    잃어버리면 같은 앱으로 업데이트가 불가능하다.
+```
+
+### 11-2. 빌드
+
+```bash
+npx @bubblewrap/cli@latest build
+# 끝나면 출력 디렉토리에 두 파일:
+#   app-release-signed.aab  ← Play Store 업로드용
+#   app-release-signed.apk  ← 직접 설치 테스트용
+# 그리고 콘솔에 SHA-256 fingerprint 출력됨. 기록!
+```
+
+### 11-3. assetlinks.json 설정 (도메인-앱 연결 증명)
+
+빌드 콘솔에서 출력된 SHA-256을 운영 `.env`에 추가:
+
+```bash
+# /var/www/jpop/.env.local
+TWA_PACKAGE_NAME=org.ernebi.jpop
+TWA_SHA256_FINGERPRINTS=AA:BB:CC:DD:...:FF
+```
+
+그 다음:
+```bash
+pm2 restart jpop
+curl https://jpop.ernebi.org/.well-known/assetlinks.json
+# → 위 fingerprint가 포함된 JSON 배열이 떠야 함
+```
+
+> Play Console이 "App Signing by Google Play"를 강제하면 빌드 후 stripe된 다른 fingerprint를 발급한다. 그 값도 `TWA_SHA256_FINGERPRINTS` 쉼표로 추가해야 한다 (release용 + Play Signing용 두 개).
+
+### 11-4. 직접 설치 테스트 (Play Store 전)
+
+USB로 Android 기기 연결, 개발자 옵션 + USB 디버깅 켜고:
+```bash
+adb install -r app-release-signed.apk
+```
+앱 실행 → jpop.ernebi.org이 풀스크린으로 떠야 함. 상단에 "by 크롬" 같은 알림 막대가 보이면 **assetlinks 미연동 상태** → 11-3 다시 확인.
+
+### 11-5. Play Console 업로드
+
+1. [Play Console](https://play.google.com/console) → **앱 만들기**
+2. 정보: 앱 이름 `THE PULSE`, 기본 언어 한국어, 무료, 게임 아님
+3. **앱 무결성 → 무결성 보호 페이지**에서 추가 SHA-256 발급되면 메모해서 `TWA_SHA256_FINGERPRINTS`에 추가
+4. **프로덕션 → 새 출시 만들기** → `app-release-signed.aab` 업로드
+5. 출시 노트 작성 (1.0.0 첫 출시)
+
+### 11-6. 스토어 등록 필수 자산
+
+| 항목 | 사양 |
+|---|---|
+| 앱 아이콘 | 512×512 PNG (이미 `public/icons/icon-512.png`) |
+| 그래픽 이미지 | 1024×500 PNG (대표 배너, 별도 디자인 필요) |
+| 폰 스크린샷 | 최소 2장, 16:9 또는 9:16, 1080×1920 권장. 5~8장 권장 |
+| 짧은 설명 | 80자 이내 한국어 |
+| 자세한 설명 | 4000자 이내 |
+| 개인정보처리방침 URL | `https://jpop.ernebi.org/privacy` (✓ 존재) |
+| 콘텐츠 등급 | 설문 — 일반적으로 "전체 이용가" |
+| 데이터 보안 양식 | 수집 데이터: 이메일(선택), 푸시 토큰(서비스 운영) 신고 |
+| 대상 연령 | 13+ (기본값) |
+
+### 11-7. 심사 → 출시
+- 내부 테스트 트랙 먼저 (수 시간 내 활성화)
+- 비공개 테스트 / 오픈 테스트는 선택
+- 프로덕션 출시: 보통 **1~3일** 심사. 거절 사유는 대부분 데이터 보안 양식 미작성 / 스크린샷 부족
+
+### 11-8. 업데이트 시 흐름
+- **웹 코드만 바뀐 경우**: 그냥 `pm2 restart jpop`. 앱은 그대로 새 페이지를 보여줌 (즉시 반영)
+- **TWA 자체 변경(아이콘/이름/manifest 등)**: `appVersionCode` +1 → `bubblewrap build` → 새 .aab 업로드 → Play 심사
+

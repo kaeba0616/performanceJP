@@ -1,0 +1,25 @@
+# Bubblewrap build artifacts — DO NOT commit
+/app/
+/store_icon.png
+/build/
+/.gradle/
+/gradle/
+/gradlew
+/gradlew.bat
+gradle.properties
+build.gradle
+settings.gradle
+local.properties
+
+# Signing keystore — never commit
+*.keystore
+*.jks
+keystore.json
+
+# Bubblewrap state
+.bubblewrap/
+
+# Build outputs
+*.aab
+*.apk
+*.idsig
