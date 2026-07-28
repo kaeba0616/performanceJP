@@ -1,5 +1,8 @@
 import Link from "next/link";
-import { ChevronRight, MapPin, CalendarDays, Ticket, Wallet, ExternalLink } from "lucide-react";
+import { notFound } from "next/navigation";
+import { ChevronRight, MapPin, CalendarDays, Ticket, Wallet, ExternalLink, Users } from "lucide-react";
+import { getOrgRole } from "@/lib/orgs/permissions";
+import { ReservationSection } from "@/components/reservation/ReservationSection";
 import { TicketCountdown } from "@/components/performance/TicketCountdown";
 import { SourceLinks } from "@/components/performance/SourceLinks";
 import { AttendanceButton } from "@/components/performance/AttendanceButton";
@@ -72,8 +75,26 @@ export default async function PerformanceDetailPage({
     );
   }
 
+  // org 공연: 비공개(private)는 소속 멤버만, 그리고 배지용 단체 정보 로드
+  const isOrgPerf = performance.origin === "org" && !!performance.org_id;
+  let org: { handle: string; name: string; is_verified: boolean } | null = null;
+  if (isOrgPerf) {
+    if (performance.visibility === "private") {
+      const role = user ? await getOrgRole(performance.org_id!, user.id) : null;
+      if (!role) notFound();
+    }
+    const svc = createServiceClient();
+    const { data: orgData } = await svc
+      .from("organizations")
+      .select("handle, name, is_verified")
+      .eq("id", performance.org_id!)
+      .maybeSingle();
+    org = orgData;
+  }
+
   const status = statusConfig[performance.status] || statusConfig.upcoming;
-  const image = performance.image_url || performance.artist?.image_url || null;
+  const image =
+    performance.poster_url || performance.image_url || performance.artist?.image_url || null;
   const setlistSongs = normalizeSongs(performance.setlist);
   const showTimes = normalizeShowTimes(performance.show_times);
   const canStamp = isStartedKST(performance.start_date);
@@ -131,6 +152,18 @@ export default async function PerformanceDetailPage({
 
         {/* Info column */}
         <div className="min-w-0 space-y-6">
+          {org && (
+            <Link
+              href={`/o/${org.handle}`}
+              className="inline-flex items-center gap-2 bg-surface-container-low hover:bg-surface-container px-4 py-2 rounded-full text-sm font-bold text-on-surface transition"
+            >
+              <Users className="w-4 h-4 text-primary" />
+              {org.name}
+              <span className="text-[10px] font-black tracking-widest text-primary uppercase">
+                동아리
+              </span>
+            </Link>
+          )}
           <h1 className="editorial-title text-3xl md:text-4xl lg:text-5xl font-black text-on-surface leading-tight">
             {performance.title}
           </h1>
@@ -224,7 +257,22 @@ export default async function PerformanceDetailPage({
         </div>
       </div>
 
-      {/* 아래: 전체 폭 섹션 */}
+      {/* 아래: 전체 폭 섹션 — org 공연은 소개 + 예약, 그 외는 라인업 + 셋리스트 */}
+      {isOrgPerf ? (
+        <div className="space-y-10">
+          {performance.summary && (
+            <section>
+              <p className="text-xs font-black text-on-surface-variant uppercase tracking-widest mb-4">
+                소개
+              </p>
+              <div className="text-on-surface leading-relaxed whitespace-pre-line">
+                {performance.summary}
+              </div>
+            </section>
+          )}
+          <ReservationSection performanceId={performance.id} />
+        </div>
+      ) : (
       <div className="space-y-10">
         {/* Lineup */}
         {performance.performance_artists &&
@@ -294,6 +342,7 @@ export default async function PerformanceDetailPage({
           songs={setlistSongs}
         />
       </div>
+      )}
     </div>
   );
 }

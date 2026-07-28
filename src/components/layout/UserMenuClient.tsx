@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Settings, LogOut, Stamp, User } from "lucide-react";
+import { Settings, LogOut, Stamp, User, Users } from "lucide-react";
 
 interface Props {
   handle: string | null;
@@ -69,6 +69,13 @@ export function UserMenuClient({
               onClick={() => setOpen(false)}
             >
               내 스탬프
+            </MenuLink>
+            <MenuLink
+              href="/o"
+              icon={<Users className="w-4 h-4" />}
+              onClick={() => setOpen(false)}
+            >
+              내 단체
             </MenuLink>
             <MenuLink
               href="/me/settings"

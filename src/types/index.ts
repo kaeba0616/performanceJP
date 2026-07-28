@@ -85,6 +85,11 @@ export interface Performance {
   image_url: string | null;
   setlist: unknown;
   show_times: unknown;
+  org_id: string | null;
+  origin: "crawled" | "admin" | "org";
+  visibility: "public" | "unlisted" | "private";
+  summary: string | null;
+  poster_url: string | null;
   created_at: string;
   updated_at: string;
   artist?: Artist | null;

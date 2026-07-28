@@ -75,6 +75,11 @@ export interface Database {
           image_url: string | null
           setlist: Json | null
           show_times: Json | null
+          org_id: string | null
+          origin: 'crawled' | 'admin' | 'org'
+          visibility: 'public' | 'unlisted' | 'private'
+          summary: string | null
+          poster_url: string | null
           created_at: string
           updated_at: string
         }
@@ -96,6 +101,11 @@ export interface Database {
           image_url?: string | null
           setlist?: Json | null
           show_times?: Json | null
+          org_id?: string | null
+          origin?: 'crawled' | 'admin' | 'org'
+          visibility?: 'public' | 'unlisted' | 'private'
+          summary?: string | null
+          poster_url?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -117,6 +127,11 @@ export interface Database {
           image_url?: string | null
           setlist?: Json | null
           show_times?: Json | null
+          org_id?: string | null
+          origin?: 'crawled' | 'admin' | 'org'
+          visibility?: 'public' | 'unlisted' | 'private'
+          summary?: string | null
+          poster_url?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -656,12 +671,332 @@ export interface Database {
           }
         ]
       }
+      organizations: {
+        Row: {
+          id: string
+          handle: string
+          name: string
+          description: string | null
+          logo_url: string | null
+          contact: string | null
+          is_verified: boolean
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          handle: string
+          name: string
+          description?: string | null
+          logo_url?: string | null
+          contact?: string | null
+          is_verified?: boolean
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          handle?: string
+          name?: string
+          description?: string | null
+          logo_url?: string | null
+          contact?: string | null
+          is_verified?: boolean
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      org_members: {
+        Row: {
+          org_id: string
+          user_id: string
+          role: 'owner' | 'staff' | 'member'
+          joined_at: string
+        }
+        Insert: {
+          org_id: string
+          user_id: string
+          role?: 'owner' | 'staff' | 'member'
+          joined_at?: string
+        }
+        Update: {
+          org_id?: string
+          user_id?: string
+          role?: 'owner' | 'staff' | 'member'
+          joined_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_members_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      org_invites: {
+        Row: {
+          id: string
+          org_id: string
+          code: string
+          role: 'owner' | 'staff' | 'member'
+          expires_at: string | null
+          used_at: string | null
+          used_by: string | null
+          created_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          code?: string
+          role?: 'owner' | 'staff' | 'member'
+          expires_at?: string | null
+          used_at?: string | null
+          used_by?: string | null
+          created_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          code?: string
+          role?: 'owner' | 'staff' | 'member'
+          expires_at?: string | null
+          used_at?: string | null
+          used_by?: string | null
+          created_by?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_invites_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      performance_shows: {
+        Row: {
+          id: string
+          performance_id: string
+          starts_at: string
+          capacity: number | null
+          label: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          performance_id: string
+          starts_at: string
+          capacity?: number | null
+          label?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          performance_id?: string
+          starts_at?: string
+          capacity?: number | null
+          label?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "performance_shows_performance_id_fkey"
+            columns: ["performance_id"]
+            isOneToOne: false
+            referencedRelation: "performances"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      reservations: {
+        Row: {
+          id: string
+          performance_id: string
+          show_id: string | null
+          name: string
+          phone: string | null
+          email: string | null
+          party_size: number
+          note: string | null
+          status: 'pending' | 'confirmed' | 'cancelled' | 'no_show'
+          cancel_token: string
+          price: number | null
+          payment_status: 'none' | 'pending' | 'paid' | 'refunded'
+          submitter_ip: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          performance_id: string
+          show_id?: string | null
+          name: string
+          phone?: string | null
+          email?: string | null
+          party_size?: number
+          note?: string | null
+          status?: 'pending' | 'confirmed' | 'cancelled' | 'no_show'
+          cancel_token?: string
+          price?: number | null
+          payment_status?: 'none' | 'pending' | 'paid' | 'refunded'
+          submitter_ip?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          performance_id?: string
+          show_id?: string | null
+          name?: string
+          phone?: string | null
+          email?: string | null
+          party_size?: number
+          note?: string | null
+          status?: 'pending' | 'confirmed' | 'cancelled' | 'no_show'
+          cancel_token?: string
+          price?: number | null
+          payment_status?: 'none' | 'pending' | 'paid' | 'refunded'
+          submitter_ip?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservations_performance_id_fkey"
+            columns: ["performance_id"]
+            isOneToOne: false
+            referencedRelation: "performances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservations_show_id_fkey"
+            columns: ["show_id"]
+            isOneToOne: false
+            referencedRelation: "performance_shows"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      announcements: {
+        Row: {
+          id: string
+          org_id: string
+          performance_id: string | null
+          title: string
+          body: string
+          audience: 'members' | 'reservers' | 'public'
+          sent_at: string | null
+          created_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          performance_id?: string | null
+          title: string
+          body: string
+          audience: 'members' | 'reservers' | 'public'
+          sent_at?: string | null
+          created_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          performance_id?: string | null
+          title?: string
+          body?: string
+          audience?: 'members' | 'reservers' | 'public'
+          sent_at?: string | null
+          created_by?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcements_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "announcements_performance_id_fkey"
+            columns: ["performance_id"]
+            isOneToOne: false
+            referencedRelation: "performances"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      announcement_deliveries: {
+        Row: {
+          id: string
+          announcement_id: string
+          channel: 'email' | 'push'
+          recipient: string
+          sent_at: string
+        }
+        Insert: {
+          id?: string
+          announcement_id: string
+          channel: 'email' | 'push'
+          recipient: string
+          sent_at?: string
+        }
+        Update: {
+          id?: string
+          announcement_id?: string
+          channel?: 'email' | 'push'
+          recipient?: string
+          sent_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcement_deliveries_announcement_id_fkey"
+            columns: ["announcement_id"]
+            isOneToOne: false
+            referencedRelation: "announcements"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
-      [_ in never]: never
+      show_availability: {
+        Row: {
+          show_id: string | null
+          performance_id: string | null
+          capacity: number | null
+          reserved: number | null
+          remaining: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "performance_shows_performance_id_fkey"
+            columns: ["performance_id"]
+            isOneToOne: false
+            referencedRelation: "performances"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Functions: {
-      [_ in never]: never
+      is_org_staff: {
+        Args: { p_org: string }
+        Returns: boolean
+      }
+      is_org_member: {
+        Args: { p_org: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
