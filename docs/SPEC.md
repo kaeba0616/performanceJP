@@ -4,12 +4,12 @@
 > 여기서 확정한다. 코드는 이 문서를 따르고, 계약을 바꾸려면 **이 문서를 먼저
 > 고친다**.
 >
-> - 최종 수정: 2026-07-28
+> - 최종 수정: 2026-07-31
 > - 상위 문서: [`docs/PRD.md`](./PRD.md)
 > - 규칙: 마이그레이션은 append-only(`020_`부터). 기존 001~019는 수정 금지.
 >
-> **Phase 1 구현 상태 (2026-07-28)**: F1~F4 **코드 구현 완료** (typecheck·lint·build 통과).
-> 마이그레이션 020~024는 롤백 검증만 완료 — **아직 DB 미적용**. 실행 후 E2E 검증 필요.
+> **Phase 1 구현 상태 (2026-07-31)**: F1~F4 **구현·DB적용·E2E 완료**
+> (typecheck·lint·build 통과, 마이그레이션 020~024 DB 적용, 핵심 플로우 E2E 통과 — §11).
 > - 쓰기 경로: 모든 org 쓰기는 서버 API(service_role)가 수행, RLS는 읽기(SELECT)만 통제.
 > - 공개 리스팅(홈·캘린더·performances API)에 `visibility='public'` 필터 추가(service_role은 RLS 우회하므로 명시 필터 필수).
 > - 발송: 공지·예약확인은 **이메일(Resend)** 구현. 웹푸시 대상 매핑은 후속(현 스키마상 org 멤버↔푸시 구독 연결 없음).
@@ -366,15 +366,15 @@ src/app/
 
 ### Phase 1 — MVP
 
-- [ ] 마이그레이션 020~024 적용 + RLS 테스트 통과
-- [ ] **F1**: 로그인 유저가 단체 생성 → owner 등록 → 초대코드로 member 가입 가능
-- [ ] **F2**: staff가 공연 개설·포스터·회차 입력 → 발행 시 `/o/:handle`·캘린더에
-      노출, private면 미노출
-- [ ] **F3**: 관객이 무인증 예약 → 잔여석 감소 → 운영진 명단·CSV 확인 → 확인
-      메일 수신
-- [ ] **F4**: staff가 공지 작성 → 대상(단원/예약자/전체)에 이메일+푸시 발송,
-      초안/발송 상태 구분
-- [ ] 기존 내한공연 캘린더·검색·알림 회귀 없음(스모크 테스트)
+- [x] 마이그레이션 020~024 적용 + RLS 테스트 통과 ✅
+- [x] **F1**: 단체 생성 → owner 등록 → 초대코드로 가입 (API·페이지 구현) ✅
+- [x] **F2**: 공연 개설·포스터·회차 입력 → 발행 시 `/o/:handle`·캘린더 노출,
+      private면 미노출 ✅ (E2E: 공개는 노출, private는 anon 404·캘린더 미노출)
+- [x] **F3**: 무인증 예약 → 잔여석 감소 → 운영진 명단·CSV·상태변경 → 확인 메일 ✅
+      (E2E: 정원 초과 409, 취소 시 잔여 복구, rate-limit 429)
+- [x] **F4**: 공지 작성 → 대상(단원/예약자/전체) **이메일** 발송, 초안/발송 구분 ✅
+      (웹푸시는 후속 — §10.6)
+- [x] 기존 내한공연 캘린더·검색·알림 회귀 없음 (build 통과, 캘린더 스모크 OK) ✅
 
 ### Phase 2
 
@@ -384,14 +384,48 @@ src/app/
 
 ---
 
-## 10. 미결 기술 결정 (SPEC 확정 대기)
+## 10. 미결 기술 결정
 
-1. **show_times 정규화 범위** — org만 `performance_shows` 사용 vs 전면 이관
-2. **잔여석 동시성** — 예약 시 락/트랜잭션 전략(초과예약 방지)
-3. **공지 발송 대상 수집** — reservers는 email 있는 예약만; 단원은 org_members ∩
-   subscribers 매핑 필요
-4. **단체 생성 승인제 여부**(PRD 오픈질문 3)
-5. **결제 PG 선택**(PRD 오픈질문 2)
+1. ~~show_times 정규화 범위~~ → ✅ org만 `performance_shows` 사용, 기존 jsonb는 내한공연용 병행.
+2. **잔여석 동시성** — 현재 낙관적 방식(삽입 후 재확인·롤백). 대규모 동시요청 시 DB 락/원자적
+   차감으로 강화 필요(현 규모엔 충분). API: `reservations/route.ts` `isOverCapacity()`.
+3. ~~공지 발송 대상 수집~~ → ✅ reservers=email 있는 예약, members=auth.users 이메일(admin API).
+4. ~~단체 생성 승인제 여부~~ → ✅ 즉시 생성(A5).
+5. **결제 PG 선택**(PRD 오픈질문 2) — Phase 2.
+6. **공지 웹푸시** — 미구현. org 멤버/예약자를 웹푸시 구독(익명 subscriber 기반)과 연결하는
+   매핑 테이블이 없어 Phase 1.5로 분리. 이메일만 발송 중.
+
+---
+
+## 11. As-Built 요약 (실제 구현)
+
+### 11.1 라우트/파일 맵
+| 영역 | 파일 |
+|------|------|
+| 권한 헬퍼 | `src/lib/orgs/{types,handle,permissions}.ts` (`requireOrgStaff`/`requirePerfOrgStaff`/`loadStaffContextByHandle`) |
+| F1 API | `api/orgs/route.ts`(생성), `handle-check`, `[id]/invites`, `join`, `[id]/members[/[userId]]` |
+| F1 페이지 | `/o`(내 단체), `/o/new`, `/o/[handle]`(공개), `/o/[handle]/manage/*`, `/join/[code]` |
+| F2 API | `api/orgs/[id]/performances`(생성), `api/performances/[id]`(PATCH/DELETE·발행), `.../shows[/[showId]]` |
+| F2 페이지 | `manage/performances`(목록/new/[perfId]/edit), 공개는 기존 `/performances/[id]` 확장(배지·소개·예약) |
+| F3 API | `api/performances/[id]/availability`, `.../reservations`(생성), `api/reservations/[id]`(상태), `api/reservations/cancel`(토큰), `api/orgs/[id]/reservations/export`(CSV) |
+| F3 UI | `components/reservation/ReservationSection.tsx`, `manage/reservations`, `/reservations/cancel/[token]` |
+| F4 API | `api/orgs/[id]/announcements`(작성), `api/announcements/[id]/send`(발송) |
+| F4 UI | `manage/announcements`, 공개 공지는 `/o/[handle]` 노출 |
+| 공통 | `lib/utils/ip.ts`, `lib/notifications/sender.ts`(`sendReservationConfirmation`/`sendAnnouncementEmail`) |
+| 발견형 | 헤더 유저메뉴 "내 단체" → `/o` |
+
+### 11.2 E2E 검증 결과 (2026-07-31, 실 DB + `next start`)
+공개 org·공연·회차(정원3)를 시드해 익명 HTTP로 검증 후 데이터 삭제:
+- availability: 공개 공연 정상 / **비공개 공연 404**
+- GET 공연: 공개 200 / **비공개(anon) 404**
+- 단체 생성 무인증 → **401**
+- 예약: 2명 OK(잔여1) → 2명 **409(정원초과)** → 1명 OK(잔여0) → 토큰취소 → **잔여2 복구**
+- 잘못된 취소 토큰 → **404**
+- 공개 org 페이지: 단체명·공개공연 노출, **비공개 공연 미노출**
+- 캘린더: 공개공연 노출, **비공개 미노출**(visibility 필터)
+- rate-limit: 6회 연속 예약 → 6번째 **429**
+
+> 인증 필요 플로우(단체 생성·관리)는 OAuth 세션이 필요해 HTTP E2E 대신 권한 헬퍼·RLS 단위로 검증.
 
 ---
 
