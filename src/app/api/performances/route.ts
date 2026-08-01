@@ -11,6 +11,7 @@ export async function GET(request: NextRequest) {
   let query = supabase
     .from("performances")
     .select("*, artist:artists!performances_artist_id_fkey(*)")
+    .eq("visibility", "public")
     .order("start_date", { ascending: true });
 
   if (month) {

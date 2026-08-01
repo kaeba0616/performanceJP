@@ -14,6 +14,7 @@ async function getLandingData() {
     supabase
       .from("performances")
       .select("*, artist:artists!performances_artist_id_fkey(*)")
+      .eq("visibility", "public")
       .not("ticket_open_at", "is", null)
       .gt("ticket_open_at", nowIso)
       .order("ticket_open_at", { ascending: true })
@@ -21,6 +22,7 @@ async function getLandingData() {
     supabase
       .from("performances")
       .select("*, artist:artists!performances_artist_id_fkey(*)")
+      .eq("visibility", "public")
       .eq("status", "on_sale")
       .gte("start_date", todayIso)
       .order("start_date", { ascending: true })
@@ -28,6 +30,7 @@ async function getLandingData() {
     supabase
       .from("performances")
       .select("*, artist:artists!performances_artist_id_fkey(*)")
+      .eq("visibility", "public")
       .in("status", ["upcoming", "on_sale"])
       .gte("start_date", todayIso)
       .order("start_date", { ascending: true })
@@ -35,6 +38,7 @@ async function getLandingData() {
     supabase
       .from("performances")
       .select("*, artist:artists!performances_artist_id_fkey(*)")
+      .eq("visibility", "public")
       .order("created_at", { ascending: false })
       .limit(6),
   ]);
