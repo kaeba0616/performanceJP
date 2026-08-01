@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronRight, MapPin, CalendarDays, Ticket, Wallet, ExternalLink, Users } from "lucide-react";
 import { getOrgRole } from "@/lib/orgs/permissions";
+import { normalizeGallery, normalizeCast, youtubeEmbedUrl } from "@/lib/orgs/promo";
 import { ReservationSection } from "@/components/reservation/ReservationSection";
 import { TicketCountdown } from "@/components/performance/TicketCountdown";
 import { SourceLinks } from "@/components/performance/SourceLinks";
@@ -95,6 +96,11 @@ export default async function PerformanceDetailPage({
   const status = statusConfig[performance.status] || statusConfig.upcoming;
   const image =
     performance.poster_url || performance.image_url || performance.artist?.image_url || null;
+
+  // org 홍보 콘텐츠 (F7)
+  const gallery = isOrgPerf ? normalizeGallery(performance.gallery) : [];
+  const castMembers = isOrgPerf ? normalizeCast(performance.cast_members) : [];
+  const videoEmbed = isOrgPerf ? youtubeEmbedUrl(performance.video_url) : null;
   const setlistSongs = normalizeSongs(performance.setlist);
   const showTimes = normalizeShowTimes(performance.show_times);
   const canStamp = isStartedKST(performance.start_date);
@@ -270,6 +276,66 @@ export default async function PerformanceDetailPage({
               </div>
             </section>
           )}
+
+          {videoEmbed && (
+            <section>
+              <p className="text-xs font-black text-on-surface-variant uppercase tracking-widest mb-4">
+                영상
+              </p>
+              <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-surface-container-high">
+                <iframe
+                  src={videoEmbed}
+                  title="공연 영상"
+                  className="absolute inset-0 w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            </section>
+          )}
+
+          {castMembers.length > 0 && (
+            <section>
+              <p className="text-xs font-black text-on-surface-variant uppercase tracking-widest mb-4">
+                출연진
+              </p>
+              <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {castMembers.map((c, i) => (
+                  <li key={i} className="bg-surface-container-lowest rounded-2xl border border-outline-variant p-4 text-center">
+                    <div className="w-16 h-16 mx-auto rounded-full bg-primary/15 overflow-hidden mb-3">
+                      {c.photo_url && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={c.photo_url} alt="" className="w-full h-full object-cover" />
+                      )}
+                    </div>
+                    <p className="font-bold text-on-surface text-sm truncate">{c.name}</p>
+                    {c.role && <p className="text-xs text-primary font-semibold">{c.role}</p>}
+                    {c.bio && <p className="text-xs text-on-surface-variant mt-1 line-clamp-2">{c.bio}</p>}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {gallery.length > 0 && (
+            <section>
+              <p className="text-xs font-black text-on-surface-variant uppercase tracking-widest mb-4">
+                갤러리
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {gallery.map((g, i) => (
+                  <figure key={i} className="rounded-2xl overflow-hidden bg-surface-container-high">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={g.url} alt={g.caption} className="w-full h-full object-cover aspect-square" />
+                    {g.caption && (
+                      <figcaption className="text-xs text-on-surface-variant p-2">{g.caption}</figcaption>
+                    )}
+                  </figure>
+                ))}
+              </div>
+            </section>
+          )}
+
           <ReservationSection performanceId={performance.id} />
         </div>
       ) : (

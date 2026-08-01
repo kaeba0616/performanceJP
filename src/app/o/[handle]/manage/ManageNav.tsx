@@ -8,6 +8,8 @@ const TABS = [
   { key: "", label: "대시보드" },
   { key: "performances", label: "공연" },
   { key: "reservations", label: "예약" },
+  { key: "recruitments", label: "모집" },
+  { key: "rehearsals", label: "연습" },
   { key: "announcements", label: "공지" },
   { key: "members", label: "멤버" },
 ];

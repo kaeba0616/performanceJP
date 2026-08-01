@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronRight, BadgeCheck } from "lucide-react";
 import { createServiceClient } from "@/lib/supabase/server";
-import { getOrgByHandle } from "@/lib/orgs/permissions";
+import { getOrgByHandle, getSessionUser, getOrgRole } from "@/lib/orgs/permissions";
+import { isStaffRole } from "@/lib/orgs/types";
 import { formatDate } from "@/lib/utils/date";
 
 interface PageProps {
@@ -29,7 +30,7 @@ export default async function OrgPublicPage({ params }: PageProps) {
   if (!org) notFound();
 
   const svc = createServiceClient();
-  const [{ data: perfs }, { data: anns }] = await Promise.all([
+  const [{ data: perfs }, { data: anns }, { data: recs }] = await Promise.all([
     svc
       .from("performances")
       .select("id, title, venue, start_date, poster_url, image_url")
@@ -44,10 +45,24 @@ export default async function OrgPublicPage({ params }: PageProps) {
       .not("sent_at", "is", null)
       .order("created_at", { ascending: false })
       .limit(5),
+    svc
+      .from("recruitments")
+      .select("id, title, parts, deadline")
+      .eq("org_id", org.id)
+      .eq("is_public", true)
+      .eq("status", "open")
+      .order("created_at", { ascending: false }),
   ]);
 
   const performances = perfs ?? [];
   const announcements = anns ?? [];
+  const recruitments = recs ?? [];
+
+  // 뷰어가 멤버면 단원 전용 링크(연습 일정) 노출
+  const viewer = await getSessionUser();
+  const viewerRole = viewer ? await getOrgRole(org.id, viewer.id) : null;
+  const isMember = !!viewerRole;
+  const isStaff = isStaffRole(viewerRole);
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-12">
@@ -78,6 +93,24 @@ export default async function OrgPublicPage({ params }: PageProps) {
         {org.contact && (
           <p className="text-xs text-on-surface-variant mt-3">문의 · {org.contact}</p>
         )}
+        {isMember && (
+          <div className="mt-5 flex items-center justify-center gap-2">
+            <Link
+              href={`/o/${org.handle}/rehearsals`}
+              className="text-sm font-bold text-primary bg-primary/10 hover:bg-primary/20 rounded-full px-4 py-2 transition"
+            >
+              연습 일정
+            </Link>
+            {isStaff && (
+              <Link
+                href={`/o/${org.handle}/manage`}
+                className="text-sm font-bold text-on-surface bg-surface-container-low hover:bg-surface-container rounded-full px-4 py-2 transition"
+              >
+                단체 관리
+              </Link>
+            )}
+          </div>
+        )}
       </header>
 
       {announcements.length > 0 && (
@@ -95,6 +128,35 @@ export default async function OrgPublicPage({ params }: PageProps) {
                 <p className="text-sm text-on-surface-variant mt-1 whitespace-pre-line line-clamp-3">
                   {a.body}
                 </p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {recruitments.length > 0 && (
+        <section className="mb-10">
+          <h2 className="text-xs font-black tracking-widest text-on-surface-variant uppercase mb-4">
+            단원 모집
+          </h2>
+          <ul className="space-y-2">
+            {recruitments.map((r) => (
+              <li key={r.id}>
+                <Link
+                  href={`/o/${org.handle}/apply/${r.id}`}
+                  className="flex items-center justify-between gap-3 bg-surface-container-lowest rounded-xl border border-outline-variant p-4 hover:bg-surface-container-low transition"
+                >
+                  <div className="min-w-0">
+                    <p className="font-bold text-on-surface truncate">{r.title}</p>
+                    <p className="text-xs text-on-surface-variant mt-0.5">
+                      {r.parts ? `${r.parts}` : "지원하기"}
+                      {r.deadline ? ` · ~${r.deadline}` : ""}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-xs font-black text-primary bg-primary/10 px-3 py-1.5 rounded-full">
+                    지원하기 →
+                  </span>
+                </Link>
               </li>
             ))}
           </ul>

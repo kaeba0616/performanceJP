@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createServiceClient } from "@/lib/supabase/server";
 import { getOrgByHandle } from "@/lib/orgs/permissions";
 import { isoToKstNaive } from "@/lib/utils/date";
+import { normalizeGallery, normalizeCast } from "@/lib/orgs/promo";
 import { PerformanceEditor, type ShowItem } from "./PerformanceEditor";
 
 interface PageProps {
@@ -52,6 +53,9 @@ export default async function EditPerformancePage({ params }: PageProps) {
         image_url: perf.image_url,
         ticket_open_local: perf.ticket_open_at ? isoToKstNaive(perf.ticket_open_at) : "",
         visibility: perf.visibility,
+        video_url: perf.video_url,
+        gallery: normalizeGallery(perf.gallery),
+        cast_members: normalizeCast(perf.cast_members),
       }}
       initialShows={shows}
     />

@@ -52,9 +52,34 @@ const NULLABLE_TEXT_FIELDS = [
   "price_info",
   "poster_url",
   "image_url",
+  "video_url",
 ] as const;
 
 const VALID_VISIBILITY = new Set(["public", "unlisted", "private"]);
+
+// jsonb 배열 정규화 — 허용 키만 남기고 문자열화
+function cleanArray(
+  value: unknown,
+  keys: string[]
+): Array<Record<string, string>> | null {
+  if (!Array.isArray(value)) return null;
+  const out: Array<Record<string, string>> = [];
+  for (const item of value) {
+    if (!item || typeof item !== "object") continue;
+    const raw = item as Record<string, unknown>;
+    const obj: Record<string, string> = {};
+    let hasContent = false;
+    for (const k of keys) {
+      const v = raw[k];
+      if (typeof v === "string" && v.trim()) {
+        obj[k] = v.trim();
+        hasContent = true;
+      }
+    }
+    if (hasContent) out.push(obj);
+  }
+  return out;
+}
 
 // PATCH /api/performances/:id — org 공연 수정/발행. 소유 org의 staff만.
 export async function PATCH(
@@ -107,6 +132,14 @@ export async function PATCH(
     const v = body.ticket_open_at;
     patch.ticket_open_at =
       typeof v === "string" && v.trim() ? kstNaiveToISO(v.trim()) : null;
+  }
+  if ("gallery" in body) {
+    const arr = cleanArray(body.gallery, ["url", "caption"]);
+    patch.gallery = arr && arr.length > 0 ? arr : null;
+  }
+  if ("cast_members" in body) {
+    const arr = cleanArray(body.cast_members, ["name", "role", "photo_url", "bio"]);
+    patch.cast_members = arr && arr.length > 0 ? arr : null;
   }
   if ("visibility" in body) {
     const v = String(body.visibility ?? "");

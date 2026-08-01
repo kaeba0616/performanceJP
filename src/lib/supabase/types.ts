@@ -80,6 +80,9 @@ export interface Database {
           visibility: 'public' | 'unlisted' | 'private'
           summary: string | null
           poster_url: string | null
+          gallery: Json | null
+          cast_members: Json | null
+          video_url: string | null
           created_at: string
           updated_at: string
         }
@@ -106,6 +109,9 @@ export interface Database {
           visibility?: 'public' | 'unlisted' | 'private'
           summary?: string | null
           poster_url?: string | null
+          gallery?: Json | null
+          cast_members?: Json | null
+          video_url?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -132,6 +138,9 @@ export interface Database {
           visibility?: 'public' | 'unlisted' | 'private'
           summary?: string | null
           poster_url?: string | null
+          gallery?: Json | null
+          cast_members?: Json | null
+          video_url?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -963,6 +972,191 @@ export interface Database {
             columns: ["announcement_id"]
             isOneToOne: false
             referencedRelation: "announcements"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      recruitments: {
+        Row: {
+          id: string
+          org_id: string
+          title: string
+          description: string | null
+          parts: string | null
+          headcount: number | null
+          deadline: string | null
+          status: 'open' | 'closed'
+          is_public: boolean
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          title: string
+          description?: string | null
+          parts?: string | null
+          headcount?: number | null
+          deadline?: string | null
+          status?: 'open' | 'closed'
+          is_public?: boolean
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          title?: string
+          description?: string | null
+          parts?: string | null
+          headcount?: number | null
+          deadline?: string | null
+          status?: 'open' | 'closed'
+          is_public?: boolean
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recruitments_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      applications: {
+        Row: {
+          id: string
+          recruitment_id: string
+          name: string
+          phone: string | null
+          email: string | null
+          part: string | null
+          intro: string | null
+          attachment_url: string | null
+          status: 'submitted' | 'screening' | 'audition' | 'passed' | 'rejected'
+          admin_note: string | null
+          submitter_ip: string | null
+          created_at: string
+          reviewed_at: string | null
+        }
+        Insert: {
+          id?: string
+          recruitment_id: string
+          name: string
+          phone?: string | null
+          email?: string | null
+          part?: string | null
+          intro?: string | null
+          attachment_url?: string | null
+          status?: 'submitted' | 'screening' | 'audition' | 'passed' | 'rejected'
+          admin_note?: string | null
+          submitter_ip?: string | null
+          created_at?: string
+          reviewed_at?: string | null
+        }
+        Update: {
+          id?: string
+          recruitment_id?: string
+          name?: string
+          phone?: string | null
+          email?: string | null
+          part?: string | null
+          intro?: string | null
+          attachment_url?: string | null
+          status?: 'submitted' | 'screening' | 'audition' | 'passed' | 'rejected'
+          admin_note?: string | null
+          submitter_ip?: string | null
+          created_at?: string
+          reviewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applications_recruitment_id_fkey"
+            columns: ["recruitment_id"]
+            isOneToOne: false
+            referencedRelation: "recruitments"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      rehearsals: {
+        Row: {
+          id: string
+          org_id: string
+          performance_id: string | null
+          title: string
+          starts_at: string
+          ends_at: string | null
+          location: string | null
+          target_parts: string | null
+          created_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          performance_id?: string | null
+          title: string
+          starts_at: string
+          ends_at?: string | null
+          location?: string | null
+          target_parts?: string | null
+          created_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          performance_id?: string | null
+          title?: string
+          starts_at?: string
+          ends_at?: string | null
+          location?: string | null
+          target_parts?: string | null
+          created_by?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rehearsals_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      rehearsal_attendances: {
+        Row: {
+          rehearsal_id: string
+          user_id: string
+          status: 'going' | 'not' | 'maybe'
+          updated_at: string
+        }
+        Insert: {
+          rehearsal_id: string
+          user_id: string
+          status: 'going' | 'not' | 'maybe'
+          updated_at?: string
+        }
+        Update: {
+          rehearsal_id?: string
+          user_id?: string
+          status?: 'going' | 'not' | 'maybe'
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rehearsal_attendances_rehearsal_id_fkey"
+            columns: ["rehearsal_id"]
+            isOneToOne: false
+            referencedRelation: "rehearsals"
             referencedColumns: ["id"]
           }
         ]

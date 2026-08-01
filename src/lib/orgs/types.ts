@@ -12,9 +12,31 @@ export type Announcement = Database["public"]["Tables"]["announcements"]["Row"];
 export type ShowAvailability =
   Database["public"]["Views"]["show_availability"]["Row"];
 
+export type Recruitment = Database["public"]["Tables"]["recruitments"]["Row"];
+export type Application = Database["public"]["Tables"]["applications"]["Row"];
+export type Rehearsal = Database["public"]["Tables"]["rehearsals"]["Row"];
+export type RehearsalAttendance =
+  Database["public"]["Tables"]["rehearsal_attendances"]["Row"];
+
 export type ReservationStatus = Reservation["status"];
 export type AnnouncementAudience = Announcement["audience"];
+export type ApplicationStatus = Application["status"];
+export type AttendanceStatus = RehearsalAttendance["status"];
 export type Visibility = "public" | "unlisted" | "private";
+
+export const APPLICATION_STATUS_LABEL: Record<ApplicationStatus, string> = {
+  submitted: "접수",
+  screening: "서류심사",
+  audition: "오디션",
+  passed: "합격",
+  rejected: "불합격",
+};
+
+export const ATTENDANCE_STATUS_LABEL: Record<AttendanceStatus, string> = {
+  going: "참석",
+  not: "불참",
+  maybe: "미정",
+};
 
 export const ROLE_LABEL: Record<OrgRole, string> = {
   owner: "소유자",

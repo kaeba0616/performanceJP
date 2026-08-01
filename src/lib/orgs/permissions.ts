@@ -110,6 +110,78 @@ export async function requirePerfOrgStaff(
   };
 }
 
+/** 모집 공고가 org 소유이고 요청자가 staff인지 확인. */
+export async function requireRecruitmentOrgStaff(
+  recruitmentId: string
+): Promise<
+  | { ok: true; ctx: StaffContext; orgId: string }
+  | { ok: false; status: 401 | 403 | 404; error: string }
+> {
+  const svc = createServiceClient();
+  const { data: rec } = await svc
+    .from("recruitments")
+    .select("id, org_id")
+    .eq("id", recruitmentId)
+    .maybeSingle();
+  if (!rec) return { ok: false, status: 404, error: "모집 공고를 찾을 수 없습니다." };
+  const guard = await requireOrgStaff(rec.org_id);
+  if (!guard.ok) return guard;
+  return { ok: true, ctx: guard.ctx, orgId: rec.org_id };
+}
+
+/** 연습이 org 소유이고 요청자가 staff인지 확인. */
+export async function requireRehearsalOrgStaff(
+  rehearsalId: string
+): Promise<
+  | { ok: true; ctx: StaffContext; orgId: string }
+  | { ok: false; status: 401 | 403 | 404; error: string }
+> {
+  const svc = createServiceClient();
+  const { data: reh } = await svc
+    .from("rehearsals")
+    .select("id, org_id")
+    .eq("id", rehearsalId)
+    .maybeSingle();
+  if (!reh) return { ok: false, status: 404, error: "연습 일정을 찾을 수 없습니다." };
+  const guard = await requireOrgStaff(reh.org_id);
+  if (!guard.ok) return guard;
+  return { ok: true, ctx: guard.ctx, orgId: reh.org_id };
+}
+
+/**
+ * 로그인 + 해당 org의 멤버(누구나) 권한을 요구. 단원 전용 화면/액션용.
+ */
+export async function requireOrgMember(
+  orgId: string
+): Promise<
+  | { ok: true; user: User; role: OrgRole }
+  | { ok: false; status: 401 | 403; error: string }
+> {
+  const user = await getSessionUser();
+  if (!user) return { ok: false, status: 401, error: "로그인이 필요합니다." };
+  const role = await getOrgRole(orgId, user.id);
+  if (!role) return { ok: false, status: 403, error: "단체 소속이 아닙니다." };
+  return { ok: true, user, role };
+}
+
+/**
+ * handle 기준 멤버 가드(서버 컴포넌트용). 미소속이면 redirect 경로 반환.
+ */
+export async function loadMemberContextByHandle(
+  handle: string
+): Promise<
+  | { ok: true; user: User; org: Organization; role: OrgRole }
+  | { ok: false; redirectTo: string }
+> {
+  const user = await getSessionUser();
+  const org = await getOrgByHandle(handle);
+  if (!org) return { ok: false, redirectTo: "/" };
+  if (!user) return { ok: false, redirectTo: `/login?next=/o/${handle}/rehearsals` };
+  const role = await getOrgRole(org.id, user.id);
+  if (!role) return { ok: false, redirectTo: `/o/${handle}` };
+  return { ok: true, user, org, role };
+}
+
 /**
  * 서버 컴포넌트(페이지/레이아웃)용 staff 가드.
  * handle로 org를 찾고 로그인·staff 여부를 확인해 컨텍스트를 돌려준다.
