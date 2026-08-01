@@ -90,6 +90,9 @@ export interface Performance {
   visibility: "public" | "unlisted" | "private";
   summary: string | null;
   poster_url: string | null;
+  gallery: unknown;
+  cast_members: unknown;
+  video_url: string | null;
   created_at: string;
   updated_at: string;
   artist?: Artist | null;

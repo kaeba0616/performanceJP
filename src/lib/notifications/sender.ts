@@ -258,3 +258,36 @@ function escapeHtml(s: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
 }
+
+// 단원 모집 심사 결과 통보 (합격/불합격)
+export async function sendApplicationResultEmail(params: {
+  to: string
+  orgName: string
+  recruitmentTitle: string
+  passed: boolean
+  note?: string | null
+}): Promise<boolean> {
+  const heading = params.passed ? '합격을 축하합니다! 🎉' : '지원 결과 안내'
+  const msg = params.passed
+    ? `${params.recruitmentTitle} 모집에 합격하셨습니다.`
+    : `${params.recruitmentTitle} 모집에 아쉽게도 함께하지 못하게 되었습니다.`
+  const html = `
+    <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#1a1a1a">
+      <p style="color:#888;font-size:12px;margin:0 0 4px">${params.orgName}</p>
+      <h2 style="margin:0 0 16px">${heading}</h2>
+      <p style="line-height:1.6;color:#333;margin:0 0 12px">${msg}</p>
+      ${params.note ? `<div style="background:#f6f6f6;border-radius:12px;padding:16px;white-space:pre-line;color:#555">${escapeHtml(params.note)}</div>` : ''}
+    </div>
+  `
+  const { error } = await getResend().emails.send({
+    from: FROM_EMAIL,
+    to: params.to,
+    subject: `[${params.orgName}] ${params.recruitmentTitle} 지원 결과`,
+    html,
+  })
+  if (error) {
+    console.error('Failed to send application result email:', error)
+    return false
+  }
+  return true
+}

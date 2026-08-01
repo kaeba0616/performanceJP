@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2, Trash2, Plus, ExternalLink } from "lucide-react";
 import type { Visibility } from "@/lib/orgs/types";
+import type { GalleryItem, CastMember } from "@/lib/orgs/promo";
 import { formatShowTime } from "@/lib/utils/date";
 
 export interface ShowItem {
@@ -27,6 +28,9 @@ interface PerfData {
   image_url: string | null;
   ticket_open_local: string;
   visibility: Visibility;
+  video_url: string | null;
+  gallery: GalleryItem[];
+  cast_members: CastMember[];
 }
 
 const inputCls =
@@ -83,6 +87,9 @@ export function PerformanceEditor({
         image_url: form.image_url,
         ticket_open_at: form.ticket_open_local || null,
         visibility: form.visibility,
+        video_url: form.video_url,
+        gallery: form.gallery,
+        cast_members: form.cast_members,
       }),
     });
     const data = await res.json().catch(() => ({}));
@@ -244,6 +251,130 @@ export function PerformanceEditor({
         <div>
           <label className={labelCls}>예매 오픈 일시 (선택, KST)</label>
           <input type="datetime-local" className={inputCls} value={form.ticket_open_local} onChange={(e) => set("ticket_open_local", e.target.value)} />
+        </div>
+      </section>
+
+      {/* 홍보 콘텐츠 (F7) */}
+      <section className="space-y-5">
+        <h3 className="font-bold text-on-surface">홍보 콘텐츠</h3>
+        <div>
+          <label className={labelCls}>대표 영상 (YouTube URL)</label>
+          <input
+            className={inputCls}
+            value={form.video_url ?? ""}
+            onChange={(e) => set("video_url", e.target.value || null)}
+            placeholder="https://youtu.be/..."
+          />
+        </div>
+
+        {/* 갤러리 */}
+        <div>
+          <label className={labelCls}>이미지 갤러리</label>
+          <div className="space-y-2">
+            {form.gallery.map((g, i) => (
+              <div key={i} className="flex gap-2">
+                <input
+                  className={inputCls}
+                  value={g.url}
+                  onChange={(e) =>
+                    set(
+                      "gallery",
+                      form.gallery.map((x, j) => (j === i ? { ...x, url: e.target.value } : x))
+                    )
+                  }
+                  placeholder="이미지 URL"
+                />
+                <input
+                  className={`${inputCls} max-w-[40%]`}
+                  value={g.caption}
+                  onChange={(e) =>
+                    set(
+                      "gallery",
+                      form.gallery.map((x, j) => (j === i ? { ...x, caption: e.target.value } : x))
+                    )
+                  }
+                  placeholder="캡션(선택)"
+                />
+                <button
+                  type="button"
+                  onClick={() => set("gallery", form.gallery.filter((_, j) => j !== i))}
+                  className="shrink-0 text-error hover:bg-error-container/30 rounded-full p-2.5 transition"
+                  aria-label="이미지 삭제"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => set("gallery", [...form.gallery, { url: "", caption: "" }])}
+              className="inline-flex items-center gap-1.5 text-sm font-bold text-secondary bg-secondary/15 hover:bg-secondary/25 rounded-xl py-2 px-4 transition"
+            >
+              <Plus className="w-4 h-4" />이미지 추가
+            </button>
+          </div>
+        </div>
+
+        {/* 출연진 */}
+        <div>
+          <label className={labelCls}>출연진 프로필</label>
+          <div className="space-y-3">
+            {form.cast_members.map((c, i) => (
+              <div key={i} className="bg-surface-container-low rounded-xl p-3 space-y-2">
+                <div className="flex gap-2">
+                  <input
+                    className={inputCls}
+                    value={c.name}
+                    onChange={(e) =>
+                      set("cast_members", form.cast_members.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))
+                    }
+                    placeholder="이름"
+                  />
+                  <input
+                    className={inputCls}
+                    value={c.role}
+                    onChange={(e) =>
+                      set("cast_members", form.cast_members.map((x, j) => (j === i ? { ...x, role: e.target.value } : x)))
+                    }
+                    placeholder="역할"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => set("cast_members", form.cast_members.filter((_, j) => j !== i))}
+                    className="shrink-0 text-error hover:bg-error-container/30 rounded-full p-2.5 transition"
+                    aria-label="출연진 삭제"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+                <input
+                  className={inputCls}
+                  value={c.photo_url}
+                  onChange={(e) =>
+                    set("cast_members", form.cast_members.map((x, j) => (j === i ? { ...x, photo_url: e.target.value } : x)))
+                  }
+                  placeholder="사진 URL(선택)"
+                />
+                <input
+                  className={inputCls}
+                  value={c.bio}
+                  onChange={(e) =>
+                    set("cast_members", form.cast_members.map((x, j) => (j === i ? { ...x, bio: e.target.value } : x)))
+                  }
+                  placeholder="한 줄 소개(선택)"
+                />
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() =>
+                set("cast_members", [...form.cast_members, { name: "", role: "", photo_url: "", bio: "" }])
+              }
+              className="inline-flex items-center gap-1.5 text-sm font-bold text-secondary bg-secondary/15 hover:bg-secondary/25 rounded-xl py-2 px-4 transition"
+            >
+              <Plus className="w-4 h-4" />출연진 추가
+            </button>
+          </div>
         </div>
       </section>
 

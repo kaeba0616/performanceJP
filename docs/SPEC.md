@@ -4,12 +4,13 @@
 > 여기서 확정한다. 코드는 이 문서를 따르고, 계약을 바꾸려면 **이 문서를 먼저
 > 고친다**.
 >
-> - 최종 수정: 2026-07-31
+> - 최종 수정: 2026-08-01
 > - 상위 문서: [`docs/PRD.md`](./PRD.md)
 > - 규칙: 마이그레이션은 append-only(`020_`부터). 기존 001~019는 수정 금지.
 >
-> **Phase 1 구현 상태 (2026-07-31)**: F1~F4 **구현·DB적용·E2E 완료**
-> (typecheck·lint·build 통과, 마이그레이션 020~024 DB 적용, 핵심 플로우 E2E 통과 — §11).
+> **Phase 1 상태 (2026-08-01)**: F1~F4 **구현·DB적용·E2E·프로덕션 배포 완료**
+> (PR #6 merged→main, `pm2 jpop` live, jpop.ernebi.org). 마이그레이션 020~024 적용, E2E 통과 — §11.
+> **Phase 2 스코핑 진행 중**: 단원 모집(F5)·연습 일정(F6)·홍보/예매 심화 — 요구사항 확정 후 §12에 계약 추가.
 > - 쓰기 경로: 모든 org 쓰기는 서버 API(service_role)가 수행, RLS는 읽기(SELECT)만 통제.
 > - 공개 리스팅(홈·캘린더·performances API)에 `visibility='public'` 필터 추가(service_role은 RLS 우회하므로 명시 필터 필수).
 > - 발송: 공지·예약확인은 **이메일(Resend)** 구현. 웹푸시 대상 매핑은 후속(현 스키마상 org 멤버↔푸시 구독 연결 없음).
@@ -426,6 +427,126 @@ src/app/
 - rate-limit: 6회 연속 예약 → 6번째 **429**
 
 > 인증 필요 플로우(단체 생성·관리)는 OAuth 세션이 필요해 HTTP E2E 대신 권한 헬퍼·RLS 단위로 검증.
+
+---
+
+## 12. Phase 2 계약 (F5 모집 · F6 연습일정 · F7 홍보콘텐츠)
+
+> 2026-08-01 결정 확정: Q1=b, Q2=a, Q3=a, Q4=홍보콘텐츠 강화. 원칙은 Phase 1과 동일
+> (쓰기=service_role 서버 API + 권한체크, RLS=읽기 통제). 마이그레이션 `025~027`.
+
+### 12.1 마이그레이션
+
+**`025_recruitments.sql`** — 모집 공고 + 지원서
+```sql
+CREATE TABLE recruitments (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id      uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  title       text NOT NULL,
+  description text,
+  parts       text,                    -- 모집 파트(자유 텍스트: "보컬, 베이스, 스태프")
+  headcount   int,                      -- 모집 인원(NULL=미정)
+  deadline    date,                     -- 마감일
+  status      text NOT NULL DEFAULT 'open' CHECK (status IN ('open','closed')),
+  is_public   boolean NOT NULL DEFAULT true,   -- /o/:handle 노출 여부
+  created_by  uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  updated_at  timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE applications (
+  id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  recruitment_id  uuid NOT NULL REFERENCES recruitments(id) ON DELETE CASCADE,
+  name            text NOT NULL,
+  phone           text,
+  email           text,
+  part            text,                 -- 지원 파트
+  intro           text,                 -- 자기소개
+  attachment_url  text,                 -- 포트폴리오/영상 링크
+  status          text NOT NULL DEFAULT 'submitted'
+                  CHECK (status IN ('submitted','screening','audition','passed','rejected')),
+  admin_note      text,
+  submitter_ip    inet,
+  created_at      timestamptz NOT NULL DEFAULT now(),
+  reviewed_at     timestamptz
+);
+```
+- RLS: `recruitments` SELECT = `is_public AND status='open'` 이거나 `is_org_member`. `applications`는
+  service_role 전용(정책 없음 — anon INSERT·staff 조회 모두 서버 API 경유). 쓰기 전부 service_role.
+- 상태 흐름: submitted→screening→audition→passed/rejected. passed/rejected 전환 시 **결과 이메일**.
+
+**`026_rehearsals.sql`** — 연습 일정 + 참석
+```sql
+CREATE TABLE rehearsals (
+  id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id         uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  performance_id uuid REFERENCES performances(id) ON DELETE SET NULL,  -- 특정 공연 연습(선택)
+  title          text NOT NULL,
+  starts_at      timestamptz NOT NULL,  -- KST
+  ends_at        timestamptz,
+  location       text,
+  target_parts   text,                  -- 대상 파트(자유 텍스트)
+  created_by     uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_at     timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE rehearsal_attendances (
+  rehearsal_id uuid NOT NULL REFERENCES rehearsals(id) ON DELETE CASCADE,
+  user_id      uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  status       text NOT NULL CHECK (status IN ('going','not','maybe')),
+  updated_at   timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (rehearsal_id, user_id)
+);
+```
+- RLS: `rehearsals` SELECT = 소속 org 멤버(`is_org_member`). 쓰기(생성·수정·삭제)=service_role(staff).
+- `rehearsal_attendances`: **Q3=a** — 단원이 세션으로 본인 것만 upsert. RLS로 세션 기반 정책 부여
+  (INSERT/UPDATE: `user_id = auth.uid()` AND 해당 리허설 org의 멤버; SELECT: 같은 org 멤버).
+  → 참석 체크만은 클라이언트 세션 직접 쓰기 허용(Phase 1 "쓰기=service_role" 예외, 명시).
+
+**`027_performance_promo_content.sql`** — 홍보 콘텐츠 컬럼
+```sql
+ALTER TABLE performances
+  ADD COLUMN gallery      jsonb,   -- [{url, caption}]
+  ADD COLUMN cast_members jsonb,   -- [{name, role, photo_url, bio}]
+  ADD COLUMN video_url    text;    -- 대표 YouTube
+```
+- 기존 org 공연 SELECT RLS 그대로 적용(추가 정책 불필요). 편집=service_role(staff, 기존 PATCH 확장).
+
+### 12.2 API 계약
+| Method | 경로 | 권한 | 설명 |
+|--------|------|------|------|
+| POST | `/api/orgs/:id/recruitments` | staff | 모집 공고 생성 |
+| PATCH/DELETE | `/api/recruitments/:id` | staff(소유 org) | 수정·마감·삭제 |
+| POST | `/api/recruitments/:id/applications` | anon(rate-limit) | 지원서 제출 |
+| PATCH | `/api/applications/:id` | staff | 상태 변경(passed/rejected 시 이메일) |
+| GET | `/api/orgs/:id/recruitments/:rid/export` | staff | 지원자 CSV |
+| POST | `/api/orgs/:id/rehearsals` | staff | 연습 일정 등록 |
+| PATCH/DELETE | `/api/rehearsals/:id` | staff | 수정·삭제 |
+| PUT | `/api/rehearsals/:id/attendance` | member(세션) | 본인 참석 상태 `{status}` |
+| PATCH | `/api/performances/:id` | staff | (확장) gallery·cast_members·video_url 편집 |
+
+### 12.3 페이지 라우트
+```
+manage/recruitments/            # 모집 공고 목록·생성(staff)
+manage/recruitments/[rid]/      # 지원자 목록·상태관리·CSV(staff)
+manage/rehearsals/              # 연습 일정 관리 + 참석 현황(staff)
+o/[handle]/apply/[rid]/         # 공개 지원서 폼(anon)
+o/[handle]/rehearsals/          # 단원 전용(is_org_member) — 일정 열람 + 본인 참석 체크
+o/[handle]/                     # (확장) 진행중 공개 모집 공고 노출
+performances/[id]/              # (확장) 갤러리·출연진·영상 렌더
+```
+
+### 12.4 DoD
+- [x] 025~027 적용 + RLS(모집 공개/멤버, 참석 본인-only) 검증 ✅ (롤백검증 + DB적용)
+- [x] F5: 공개 지원(anon) → staff 상태변경(합격) → 결과메일 → CSV ✅
+      (E2E: 공개공고 노출·마감공고 409·anon 지원 저장·staff 무인증 401)
+- [x] F6: staff 일정 등록 → 단원 로그인 본인 참석 체크 → staff 현황 집계 ✅
+      (attendance PUT 무인증 401 확인; 세션 참석체크는 실브라우저 확인 권장)
+- [x] F7: 공연 편집에서 갤러리·출연진·영상 저장 → 공개 상세에 렌더 ✅
+- [x] Phase 1 회귀 없음(typecheck·lint·build 통과) ✅
+
+> 구현·DB적용·anon E2E 완료(2026-08-01). 인증 필요 플로우(모집 심사·연습 참석)는
+> 권한 가드(401/403)·RLS 단위 검증 + 실브라우저 스모크 권장.
 
 ---
 
