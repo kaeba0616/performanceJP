@@ -177,6 +177,30 @@ sudo systemctl reload nginx
 
 이 시점에 `http://jpop.ernebi.org` 접속하면 앱이 떠야 한다.
 
+### 4-1. 큰 인증 쿠키 대응 (로그인 520 방지) — 필수
+
+Supabase + Google/Kakao OAuth 로그인 시 세션 쿠키가 ~5.5KB로 커진다(청크
+쿠키 `sb-...-auth-token.0/.1`). **nginx 1.18의 HTTP/2는 `http2_max_field_size`
+기본값 4KB가 `large_client_header_buffers`(HTTP/1.1용)와 별도로 적용**되어, 큰
+`Cookie:` 헤더를 HTTP/2 스트림 리셋으로 거부한다 → Cloudflare가 520
+("Web server is returning an unknown error")으로 표면화. nginx/pm2 로그에는
+안 남는다(프로토콜 레벨 거부).
+
+HTTP/2 헤더 한도를 올려 정상화(1.19.7+는 이 문제 없음 — directive가 통합됨):
+```bash
+printf 'http2_max_field_size 32k;\nhttp2_max_header_size 64k;\n' \
+  | sudo tee /etc/nginx/conf.d/http2-large-headers.conf
+sudo nginx -t && sudo systemctl reload nginx
+```
+검증(5.5KB 쿠키가 200이면 정상):
+```bash
+BIG=$(head -c 5548 /dev/zero | tr '\0' 'a')
+curl -s -o /dev/null -w "%{http_code}\n" -H "Cookie: sb-a=$BIG" https://jpop.ernebi.org/
+```
+
+> vhost의 `large_client_header_buffers 8 32k;`(HTTP/1.1용)와 함께 둔다. nginx를
+> 재설치/재구축하면 이 스니펫도 다시 적용해야 한다.
+
 ---
 
 ## 5. HTTPS 발급 (Let's Encrypt)
